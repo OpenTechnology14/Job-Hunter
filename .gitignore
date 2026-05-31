@@ -1,0 +1,47 @@
+# Environment and secrets
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Personal profiles (contain real names, emails, phones)
+# Only example_profile.py should be committed
+profiles/*.py
+!profiles/__init__.py
+!profiles/example_profile.py
+
+# User output data (jobs, resumes, logs)
+output/
+
+# Google credentials
+credentials/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# Playwright browser binaries
+playwright/
+
+# Node (if admin panel ever gets a build step)
+node_modules/
