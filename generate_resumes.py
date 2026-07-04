@@ -1117,20 +1117,227 @@ def generate_alex_saas_ops():
     print(f"  Generated: {out}")
 
 
+# ===================================================================
+# ALEX - AI Training / Data Annotation
+# ===================================================================
+
+def generate_alex_ai_training():
+    """Resume tailored to AI-training platforms (DataAnnotation, Outlier,
+    Alignerr, xAI Tutor, etc.) — leads with writing quality, evaluation
+    rigor, coding ability, and domain knowledge rather than IT ops."""
+    pdf = ResumePDF(accent_color=(106, 76, 175))
+    pdf.add_page()
+    pdf.header_block("Alexander Moody",
+        "(603) 943-0051  |  alexmoody1421@gmail.com  |  Remote (Nashua, NH, US)  |  opentechnologyblog.com")
+
+    pdf.section_heading("Professional Summary")
+    pdf.summary_text(
+        "Technical writer and systems professional with a BS in Computer Science, 4 years of "
+        "production IT/automation work, and a published technical blog. Daily hands-on experience "
+        "evaluating LLM outputs, writing and refining prompts, and reviewing code in Python and "
+        "TypeScript. Detail-oriented by trade - built and ran compliance audit programs where "
+        "accuracy and consistent judgment against written rubrics were the entire job. Available "
+        "20+ hours/week for AI training, annotation, and evaluation work.")
+
+    pdf.section_heading("Relevant Skills for AI Training Work")
+    pdf.skills_line("Writing & Evaluation: Technical writing (published blog), rubric-based quality "
+        "review, clear rationale writing, proofreading, fact-checking against documentation")
+    pdf.skills_line("Coding (for code-annotation queues): Python, TypeScript/JavaScript, React, "
+        "Express/Node.js, SQL, REST APIs - reads, writes, debugs, and reviews production code")
+    pdf.skills_line("AI Familiarity: Prompt engineering patterns, LLM response comparison and ranking, "
+        "hallucination spotting, instruction-following evaluation, AI-assisted workflow design")
+    pdf.skills_line("Domain Knowledge: IT operations, cybersecurity/access control, healthcare IT "
+        "(HIPAA-aware), networking (Cisco curriculum), SaaS administration")
+    pdf.skills_line("Work Habits: Fully remote for 4 years, self-directed through 8 manager changes, "
+        "consistent daily output without supervision, meets written spec exactly")
+
+    pdf.section_heading("Experience")
+
+    pdf.job_header("Open Technology Blog", "opentechnologyblog.com",
+        "Author & Publisher - Applied AI and Automation Writing")
+    pdf.bullet("Writes long-form technical content on LLM integrations, prompt engineering patterns, "
+        "and workflow automation - the same explain-your-reasoning writing AI training tasks require")
+    pdf.bullet("Publishes working code examples with step-by-step explanations - practiced at judging "
+        "whether a technical explanation is correct, complete, and clear")
+    pdf.bullet("Edits own drafts against a consistent style standard - directly transferable to "
+        "response-rating and rewrite tasks")
+
+    pdf.job_header("Eleanor Health", "July 2022 - Present",
+        "Senior IT Support Associate - Automation & Compliance Auditing")
+    pdf.bullet("Ran multi-cadence access control audits across 30+ SaaS platforms - thousands of "
+        "individual judgment calls per year against written criteria, with zero failed audits")
+    pdf.bullet("Wrote the organization's IT knowledge base: hundreds of task-oriented articles for "
+        "non-technical staff - practiced at judging clarity for a general audience")
+    pdf.bullet("Built Python and PowerShell automation for provisioning, license auditing, and "
+        "compliance reporting - comfortable reading unfamiliar code and spotting defects")
+    pdf.bullet("Documented every process to survive personnel changes - precise, unambiguous "
+        "instruction writing is a core skill, not an afterthought")
+
+    pdf.job_header("Open Technology App", "opentechnologyapp.com", "Founder / Full-Stack Developer")
+    pdf.bullet("Designed and shipped a production web app end-to-end: React/TypeScript frontend, "
+        "Express backend, Postgres database - can evaluate code-generation outputs across the stack")
+    pdf.bullet("Integrates AI tooling for workflow automation - hands-on experience with where "
+        "LLM outputs go wrong in real applications")
+
+    pdf.section_heading("Why I Fit AI Training Work")
+    pdf.context_paragraph(
+        "AI training work rewards three things: consistent judgment against a rubric, clear written "
+        "rationales, and enough technical depth to catch subtle errors. My audit background is "
+        "rubric-based judgment at scale. My blog is public evidence of my writing. My CS degree and "
+        "production coding work cover the technical queues - including code review and debugging "
+        "tasks that most annotators can't access. All work submitted is my own.")
+
+    pdf.section_heading("Education & Availability")
+    pdf.edu_entry("Southern New Hampshire University", "BS Computer Science", "June 2022")
+    pdf.edu_entry("Nashua Community College", "AS Computer Networking - Cisco curriculum", "May 2020")
+    pdf.ln(1)
+    pdf.skills_line("Availability: 20+ hrs/week, flexible schedule incl. evenings/weekends  |  "
+        "US-based (New Hampshire)  |  Reliable high-speed internet, dedicated home office")
+
+    out = Path("output/alex/resumes/Alex_Moody_AITraining_Resume.pdf")
+    pdf.output(str(out))
+    print(f"  Generated: {out}")
+
+
+# ===================================================================
+# ALEX - Freelance / Contract IT
+# ===================================================================
+
+def generate_alex_freelance_it():
+    """Freelance/contract IT resume — leads with the two live products
+    (opentechnologyapp.com, opentechnologyblog.com) as proof of independent
+    delivery, then frames the employment history as engagement outcomes."""
+    pdf = ResumePDF(accent_color=(180, 100, 20))
+    pdf.add_page()
+    pdf.header_block("Alexander Moody",
+        "(603) 943-0051  |  alexmoody1421@gmail.com  |  opentechnologyapp.com  |  opentechnologyblog.com")
+
+    pdf.section_heading("Profile")
+    pdf.summary_text(
+        "Independent IT and automation professional who ships complete systems solo - and can "
+        "prove it with two live products. Built and operates a production SaaS application "
+        "(opentechnologyapp.com) and publishes applied technical content (opentechnologyblog.com). "
+        "4 years as the sole IT operator for a 200-person company - the exact skill set of "
+        "fractional IT: own everything, document everything, need no supervision. Available for "
+        "contract, fractional, and project-based engagements.")
+
+    pdf.section_heading("Services")
+    pdf.skills_line("Workflow Automation - Python/API automations for onboarding, auditing, reporting, "
+        "and data pipelines; eliminate the manual work your team does every week")
+    pdf.skills_line("Web Application Development - full-stack builds (React/TypeScript, Express, "
+        "Postgres) from requirements to deployed product with auth, roles, and CI/CD")
+    pdf.skills_line("Fractional IT Operations - SaaS administration, identity/access management, "
+        "onboarding/offboarding pipelines, and endpoint management for small teams without an IT hire")
+    pdf.skills_line("Access Control & Compliance Audits - least-privilege reviews across your SaaS "
+        "stack, documented runbooks, HIPAA-aware processes")
+
+    pdf.section_heading("Featured Work (Live Products)")
+
+    pdf.job_header("Open Technology App", "opentechnologyapp.com", "Founder / Sole Developer & Operator")
+    pdf.context_paragraph(
+        "A production SaaS application designed, built, deployed, and operated by one person - "
+        "end-to-end proof of independent delivery.")
+    pdf.bullet("Full stack: React/TypeScript frontend, Express API, Supabase (Postgres), deployed on "
+        "Vercel serverless with GitHub-driven CI/CD - the same architecture I deliver for clients")
+    pdf.bullet("Production-grade security built in: JWT authentication, server-side role-based access "
+        "control, IP rate limiting, strict CORS, input validation on every endpoint")
+    pdf.bullet("Automation engine with configurable triggers, webhook integrations, and dashboard "
+        "analytics (charts, Gantt views, live stat cards) - complex features shipped solo")
+    pdf.bullet("Operated in production: monitoring, environment management, incident response - "
+        "I don't hand off and disappear; I know what running software costs")
+
+    pdf.job_header("Open Technology Blog", "opentechnologyblog.com", "Author & Publisher")
+    pdf.bullet("Applied AI, automation, and open-source content for technical practitioners - "
+        "LLM integrations, prompt engineering patterns, and workflow automation with working code")
+    pdf.bullet("Public evidence of communication skill: every engagement includes documentation "
+        "your team can actually use after I leave")
+
+    pdf.job_header("Job Application Automation Platform", "", "Developer")
+    pdf.bullet("Multi-user automation tool integrating 15+ job board APIs with Playwright browser "
+        "automation, matching engine, admin dashboard, and per-user configuration")
+    pdf.bullet("Demonstrates rapid internal-tool delivery: API orchestration, data pipelines, "
+        "deduplication, and a self-serve web UI - the kind of tooling teams pay agencies for")
+
+    # PAGE 2
+    pdf.section_heading("Engagement History")
+
+    pdf.job_header("Eleanor Health", "July 2022 - Present",
+        "Senior IT Support Associate - sole IT operator (200-person remote healthcare company)")
+    pdf.context_paragraph(
+        "Four years running IT single-handedly through 8 management transitions - functionally a "
+        "long-term fractional IT engagement, delivered while employed in-house.")
+    pdf.bullet("Built the automated onboarding pipeline (accounts, laptop imaging, SaaS access, "
+        "compliance checks) - cut provisioning from 2 days to 4 hours")
+    pdf.bullet("Administered 30+ SaaS platforms end-to-end: evaluation, procurement, SSO/SCIM "
+        "integration, access governance, decommissioning")
+    pdf.bullet("Designed multi-cadence access audits enforcing least-privilege org-wide - zero "
+        "failed audits in 4 years, HIPAA-aware environment")
+    pdf.bullet("Wrote the self-service knowledge base that cut help desk volume - documentation "
+        "designed to outlive its author, the core freelance deliverable")
+
+    pdf.job_header("Brooks Automation / Matrix Global", "2021 - 2022",
+        "IT Support & Hospital EHR Deployment")
+    pdf.bullet("Multi-site enterprise support (Windows Server, SCCM, Dell KACE) and large-scale "
+        "hospital endpoint deployment - comfortable dropping into unfamiliar environments and delivering")
+
+    pdf.section_heading("Technical Skills")
+    pdf.skills_line("Development: TypeScript, Python, React, Express/Node.js, SQL, REST APIs, "
+        "Playwright automation, Git/GitHub, CI/CD")
+    pdf.skills_line("Infrastructure: Supabase (Postgres), Vercel serverless, Windows Server, SCCM, "
+        "Cisco networking, macOS/Windows endpoint management")
+    pdf.skills_line("AI & Automation: LLM application design, prompt engineering, API integrations, "
+        "workflow automation, data pipelines")
+    pdf.skills_line("Security & Compliance: Access governance, JWT/RBAC, rate limiting, HIPAA "
+        "awareness, audit programs, security runbooks")
+
+    pdf.section_heading("How I Work")
+    pdf.context_paragraph(
+        "Every engagement produces three things: the working system, the documentation to run it "
+        "without me, and a handoff your team can actually follow. Four years of surviving 8 "
+        "management transitions taught me to build for my own absence - which is exactly what "
+        "you want from a contractor. Fixed-scope projects, fractional retainers, or hourly - "
+        "remote from New Hampshire (US), overlap with all US time zones.")
+
+    pdf.section_heading("Education")
+    pdf.edu_entry("Southern New Hampshire University", "BS Computer Science", "June 2022")
+    pdf.edu_entry("Nashua Community College", "AS Computer Networking - Cisco curriculum", "May 2020")
+
+    out = Path("output/alex/resumes/Alex_Moody_FreelanceIT_Resume.pdf")
+    pdf.output(str(out))
+    print(f"  Generated: {out}")
+
+
+# ===================================================================
+# Main — run all, or a single resume via --only <key>
+# ===================================================================
+
+GENERATORS = {
+    "alex-ai-engineer": generate_alex_ai_2page,
+    "alex-cybersecurity": generate_alex_cyber_2page,
+    "alex-health-it": generate_alex_healthit_2page,
+    "alex-it-manager": generate_alex_it_manager,
+    "alex-technical-pm": generate_alex_technical_pm,
+    "alex-saas-ops": generate_alex_saas_ops,
+    "alex-ai-training": generate_alex_ai_training,
+    "alex-freelance-it": generate_alex_freelance_it,
+    "marcelli-care-coord": generate_marcelli_care_coord_2page,
+    "marcelli-coding-billing": generate_marcelli_coding_billing_2page,
+    "marcelli-direct-care": generate_marcelli_direct_care_2page,
+}
+
 if __name__ == "__main__":
-    print("\nGenerating 2-page resumes...\n")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--only", choices=sorted(GENERATORS),
+                        help="Generate a single resume instead of all")
+    args = parser.parse_args()
 
-    print("Alex (3 existing + 3 new):")
-    generate_alex_ai_2page()
-    generate_alex_cyber_2page()
-    generate_alex_healthit_2page()
-    generate_alex_it_manager()
-    generate_alex_technical_pm()
-    generate_alex_saas_ops()
-
-    print("\nMarcelli (3 existing):")
-    generate_marcelli_care_coord_2page()
-    generate_marcelli_coding_billing_2page()
-    generate_marcelli_direct_care_2page()
-
-    print("\nDone! 9 PDFs generated.")
+    if args.only:
+        print(f"\nGenerating resume: {args.only}\n")
+        GENERATORS[args.only]()
+        print("\nDone! 1 PDF generated.")
+    else:
+        print("\nGenerating resumes...\n")
+        for name, fn in GENERATORS.items():
+            fn()
+        print(f"\nDone! {len(GENERATORS)} PDFs generated.")

@@ -475,6 +475,111 @@ def serve_resume(profile, filename):
     return send_file(resume_path, mimetype="application/pdf")
 
 
+# ── AI Training endpoints ───────────────────────────────
+# Platform directory + tracker helpers come from ai_training.py, which is
+# import-safe (no profile loading side effects).
+
+from ai_training import (
+    AI_TRAINING_PLATFORMS, TRACKER_STATUSES,
+    load_tracker, save_tracker, update_platform_status,
+)
+
+
+@app.route("/api/ai-training/<profile>")
+def get_ai_training(profile):
+    """Platform directory merged with per-profile signup statuses + setup state."""
+    profile_data = _load_profile_module(profile)
+    if not profile_data:
+        return jsonify({"error": "Profile not found"}), 404
+
+    roles = profile_data.get("role_profiles", {}) or {}
+    role = roles.get("ai-training") if isinstance(roles, dict) else None
+
+    resume_file = (role or {}).get("resume_file", "")
+    resume_exists = bool(resume_file) and (
+        _profile_dir(profile) / "resumes" / resume_file).exists()
+
+    # Count AI-training jobs currently in jobs.csv
+    role_label = (role or {}).get("label", "AI Training / Data Annotation")
+    rows = _read_csv(_profile_dir(profile) / "jobs.csv")
+    ai_jobs = [r for r in rows if (r.get("Role Category") or "") == role_label]
+    ai_approved = sum(1 for r in ai_jobs
+                      if (r.get("Apply", "") or "").strip().upper() in ("Y",)
+                      or (r.get("Apply", "") or "").strip().upper().startswith("DONE"))
+
+    tracker = load_tracker(profile)
+    save_tracker(profile, tracker)  # persist seeding of any new platforms
+
+    platforms = []
+    for p in AI_TRAINING_PLATFORMS:
+        entry = tracker["platforms"].get(p["id"], {})
+        platforms.append({
+            **p,
+            "status": entry.get("status", "Not Started"),
+            "notes": entry.get("notes", ""),
+            "updated": entry.get("updated", ""),
+        })
+
+    up = profile_data.get("user_profile", {}) or {}
+    return jsonify({
+        "platforms": platforms,
+        "statuses": TRACKER_STATUSES,
+        "setup": {
+            "role_configured": role is not None,
+            "role_label": role_label,
+            "search_queries": (role or {}).get("search_queries", []),
+            "resume_file": resume_file,
+            "resume_exists": resume_exists,
+            "can_generate_resume": profile == "alex",
+            "ai_job_count": len(ai_jobs),
+            "ai_approved_count": ai_approved,
+        },
+        "applicant_data": {
+            "name": up.get("name", ""),
+            "email": up.get("email", ""),
+            "phone": up.get("phone", ""),
+            "location": ", ".join(x for x in [up.get("city", ""), up.get("state", ""), up.get("country", "")] if x),
+            "current_role": up.get("current_role", ""),
+            "experience_years": up.get("experience_years", 0),
+            "key_skills": up.get("key_skills", []),
+            "portfolio_urls": up.get("portfolio_urls", []),
+            "linkedin": up.get("linkedin", ""),
+        },
+    })
+
+
+@app.route("/api/ai-training/<profile>/platforms/<platform_id>", methods=["PATCH"])
+def patch_ai_platform(profile, platform_id):
+    if platform_id not in {p["id"] for p in AI_TRAINING_PLATFORMS}:
+        return jsonify({"error": "Unknown platform"}), 404
+
+    body = request.json or {}
+    status = body.get("status")
+    if status is not None and status not in TRACKER_STATUSES:
+        return jsonify({"error": f"Status must be one of {TRACKER_STATUSES}"}), 400
+
+    entry = update_platform_status(profile, platform_id,
+                                   status=status, notes=body.get("notes"))
+    return jsonify({"ok": True, "platform": platform_id, **entry})
+
+
+@app.route("/api/ai-training/<profile>/generate-resume", methods=["POST"])
+def generate_ai_resume(profile):
+    """Regenerate the AI-training resume PDF (currently wired for alex only)."""
+    if profile != "alex":
+        return jsonify({"error": "Resume generator is only configured for 'alex'. "
+                                 "Upload a PDF on the Resumes page instead."}), 400
+
+    venv_python = str(PROJECT_ROOT / "venv" / "bin" / "python")
+    result = subprocess.run(
+        [venv_python, "generate_resumes.py", "--only", "alex-ai-training"],
+        capture_output=True, text=True, timeout=120, cwd=str(PROJECT_ROOT),
+    )
+    if result.returncode != 0:
+        return jsonify({"error": result.stderr[-500:] or "Generation failed"}), 500
+    return jsonify({"ok": True, "filename": "Alex_Moody_AITraining_Resume.pdf"})
+
+
 # ── Run History endpoints ───────────────────────────────
 
 @app.route("/api/history/<profile>")

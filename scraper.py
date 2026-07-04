@@ -40,6 +40,7 @@ class JobListing:
     date_posted: str = ""
     apply_method: str = ""
     job_id: str = ""
+    role_hint: str = ""  # force-match to this role id (e.g. "ai-training")
 
     def __post_init__(self):
         if not self.job_id:

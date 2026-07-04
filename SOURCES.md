@@ -26,6 +26,9 @@ and what each requires.
 | 15 | ZipRecruiter | Playwright | None | Large US market |
 | 16 | SimplyHired | Playwright | None | Indeed-owned aggregator |
 | 17 | Health eCareers | Playwright | None | Healthcare-specific |
+| 18 | Ashby (AI Training) | JSON API | None | AI-training companies (Mercor, OpenAI human data) |
+| 19 | Greenhouse (AI Training) | JSON API | None | xAI Tutors, Scale AI, Invisible Tech, Labelbox |
+| 20 | Lever (AI Training) | JSON API | None | Welocalize rater roles |
 
 ---
 
@@ -109,6 +112,43 @@ playwright install chromium
 - Some sites have bot detection (CAPTCHAs, rate limiting)
 - LinkedIn may require login for full results (public listings are limited)
 - Run during off-peak hours for best results
+
+---
+
+## AI Training / Data Annotation Module (`ai_training.py`)
+
+A dedicated module for AI-training gig work (DataAnnotation, Outlier, Alignerr,
+Mercor, xAI Tutors, etc.). Two parts:
+
+**1. Platform directory (signup-based marketplaces).** 15 curated platforms
+with pay ranges, focus areas, and signup processes. These aren't job postings —
+you sign up once, pass an assessment, then pick up paid tasks. Track your
+signup status per platform on the Admin Panel's **AI Training** page
+(stored in `output/{profile}/ai_training.json`).
+
+**2. Job-board scrapers (sources 18-20).** Real postings at AI-training
+companies via Ashby/Greenhouse/Lever public APIs, filtered to
+trainer/annotator/tutor/rater-type titles. These flow into `jobs.csv`
+automatically tagged as the "ai-training" role category.
+
+**Activation:** add a role with ID exactly `ai-training` to your profile's
+`ROLE_PROFILES` (see `profiles/example_profile.py` for the template). Keep
+`salary_min: 0` — these are hourly gigs ($15–$65/hr) and an annual salary
+floor would filter them all out. Skip for one run with
+`python run_scrape.py --profile you --no-ai`.
+
+**Test standalone:**
+```bash
+python ai_training.py --profile alex           # print directory + tracker
+python ai_training.py --profile alex --scrape  # also test the scrapers
+```
+
+**Adding companies:** edit `ASHBY_AI_COMPANIES`, `GREENHOUSE_AI_COMPANIES`,
+or `LEVER_AI_COMPANIES` in `ai_training.py`. Wrong slugs 404 and are skipped.
+
+**⚠️ Human-only work:** every platform in the directory prohibits submitting
+AI-generated task work and screens for it (bans + withheld pay). This module
+automates finding gigs and tracking signups — not the task work itself.
 
 ---
 

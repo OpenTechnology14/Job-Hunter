@@ -40,6 +40,7 @@ job-hunter/
 ├── scraper.py               ← API scrapers (sources 1-6)
 ├── scraper_extended.py      ← Extended scrapers (sources 7-17)
 ├── scraper_web.py           ← Internet-wide search (DuckDuckGo + career pages)
+├── ai_training.py           ← AI-training module: platform directory + scrapers (sources 18-20)
 ├── matcher.py               ← Keyword + salary matching (no AI)
 ├── browser_apply.py         ← Playwright browser automation
 ├── resume_picker.py         ← Maps role → resume PDF
@@ -215,11 +216,14 @@ Add USAJobs API key if desired (optional, free signup).
 python run_scrape.py --profile alex
 ```
 Scrapes 11 job board APIs + internet-wide search (DuckDuckGo + company career
-pages). Automatically cleans up stale unapproved jobs older than 30 days.
+pages). If the profile has an `ai-training` role, also scrapes AI-training
+company boards (xAI Tutors, Mercor, Scale AI... — see `ai_training.py`).
+Automatically cleans up stale unapproved jobs older than 30 days.
 Results go to `output/{profile}/jobs.csv`.
 
 **Flags:**
 - `--web` — Force web search even if `web_search: False` in profile
+- `--no-ai` — Skip AI-training sources for this run
 - `--no-web` — Skip web search even if `web_search: True` in profile
 - `--no-cleanup` — Skip stale job cleanup for this run
 
@@ -352,6 +356,7 @@ python admin/server.py
 ### Pages:
 - **Dashboard** — Job counts, category breakdown, run scrapes
 - **Jobs** — View/approve/reject jobs from both CSVs, search, filter, sort
+- **AI Training** — AI-training gig setup: platform directory (DataAnnotation, Outlier, Alignerr...) with per-platform signup status tracking, setup checklist, resume generation, and the applicant data used for signups
 - **Config** — View profile info, location filter, role profiles, toggle web search & stale cleanup
 - **Form Fill** — Edit form auto-fill patterns and dropdown defaults
 - **Resumes** — View all resume PDFs with direct PDF viewer links

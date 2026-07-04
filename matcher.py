@@ -119,8 +119,15 @@ def match_jobs(jobs: list[dict]) -> list[dict]:
         if any(ex in title_lower for ex in excluded_lower):
             continue
 
-        # Match title to role
-        role_id, role_label, confidence = match_title_to_role(title)
+        # Scraper-provided role hint (e.g. AI-training sources) wins outright
+        role_hint = job.get("role_hint", "")
+        if role_hint and role_hint in ROLE_PROFILES:
+            role_id = role_hint
+            role_label = ROLE_PROFILES[role_hint]["label"]
+            confidence = 1.0
+        else:
+            # Match title to role
+            role_id, role_label, confidence = match_title_to_role(title)
 
         if not role_id:
             # No role match — tag as "Unmatched" for manual review
