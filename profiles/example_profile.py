@@ -52,6 +52,16 @@ ROLE_PROFILES = {
     #     "resume_file": "FirstLast_Role2.pdf",
     #     "search_queries": ["Job Title A", "Job Title B"],
     # },
+    # AI training / data annotation gigs (DataAnnotation, Outlier, xAI Tutor...).
+    # The role id MUST be "ai-training" — it activates the AI-training scrapers
+    # (ai_training.py) and the Admin Panel's AI Training page.
+    # "ai-training": {
+    #     "label": "AI Training / Data Annotation",
+    #     "salary_min": 0,        # hourly gigs — keep 0 so $/hr rates pass
+    #     "salary_max": 200000,
+    #     "resume_file": "FirstLast_AITraining.pdf",
+    #     "search_queries": ["AI Trainer", "Data Annotator", "AI Tutor", "Search Quality Rater"],
+    # },
 }
 
 INTERESTING_ROLE = {

@@ -29,19 +29,22 @@
     nav {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      display: flex; align-items: center; gap: 8px;
-      height: 52px;
+      padding: 6px 24px;
+      display: flex; align-items: center; gap: 4px 8px;
+      flex-wrap: wrap;
+      min-height: 52px;
       position: sticky; top: 0; z-index: 100;
     }
     nav .brand {
       font-weight: 700; font-size: 15px;
-      margin-right: 24px; color: var(--accent);
+      margin-right: 16px; color: var(--accent);
+      white-space: nowrap;
     }
     nav button {
       background: none; border: none; color: var(--text-dim);
-      padding: 8px 14px; font-size: 13px; cursor: pointer;
+      padding: 8px 12px; font-size: 13px; cursor: pointer;
       border-radius: 6px; font-weight: 500;
+      white-space: nowrap;
     }
     nav button:hover { background: var(--surface2); color: var(--text); }
     nav button.active { background: var(--accent); color: #fff; }
@@ -364,6 +367,7 @@
   <span class="brand">Job Hunter</span>
   <button onclick="showPage('dashboard')" id="nav-dashboard" class="active">Dashboard</button>
   <button onclick="showPage('jobs')" id="nav-jobs">Jobs</button>
+  <button onclick="showPage('aitraining')" id="nav-aitraining">AI Training</button>
   <button onclick="showPage('config')" id="nav-config">Config</button>
   <button onclick="showPage('forms')" id="nav-forms">Form Fill</button>
   <button onclick="showPage('resumes')" id="nav-resumes">Resumes</button>
@@ -413,6 +417,12 @@
       </select>
     </div>
     <div id="jobs-content"></div>
+  </div>
+
+  <!-- ═══ AI TRAINING ═══ -->
+  <div class="page" id="page-aitraining">
+    <h2>AI Training &amp; Data Annotation</h2>
+    <div id="aitraining-content"></div>
   </div>
 
   <!-- ═══ CONFIG ═══ -->
@@ -639,6 +649,7 @@ function showPage(name) {
 function loadPage(name) {
   if (name === 'dashboard') loadDashboard();
   else if (name === 'jobs') loadJobs();
+  else if (name === 'aitraining') loadAITraining();
   else if (name === 'config') loadConfig();
   else if (name === 'forms') loadFormConfig();
   else if (name === 'resumes') loadResumes();
@@ -1113,6 +1124,173 @@ async function toggleSearchSetting(profile, key, value) {
   loadConfig();
 }
 
+// ── AI Training ────────────────────────────────────────
+async function loadAITraining() {
+  const toRender = getProfilesToRender();
+  let html = '';
+
+  for (const profile of toRender) {
+    const data = await api(`/api/ai-training/${profile}`);
+    if (data.error) {
+      html = `<div class="empty-state"><div class="icon">&#129302;</div><p>${esc(data.error)}</p></div>`;
+      continue;
+    }
+    const content = renderAITrainingBody(profile, data);
+    if (deployedMode) {
+      const displayName = allUsers.find(u => u.profile === profile)?.display_name || profile;
+      html += userSectionHTML(profile, displayName, '', content);
+    } else {
+      html = content;
+    }
+  }
+
+  document.getElementById('aitraining-content').innerHTML = html;
+}
+
+const AI_TIER_COLORS = {
+  'top pick': { bg: '#064e3b', fg: '#6ee7b7' },
+  'expert':   { bg: '#3b0764', fg: '#c4b5fd' },
+  'general':  { bg: '#1e3a8a', fg: '#93c5fd' },
+  'steady':   { bg: '#78350f', fg: '#fcd34d' },
+  'backup':   { bg: '#2e3345', fg: '#8b90a0' },
+};
+
+const AI_STATUS_COLORS = {
+  'Not Started': 'var(--text-dim)', 'Signed Up': 'var(--accent)',
+  'Assessment': 'var(--yellow)', 'Active': 'var(--green)',
+  'Paused': 'var(--orange)', 'Rejected': 'var(--red)',
+};
+
+function renderAITrainingBody(profile, data) {
+  const setup = data.setup || {};
+  const ad = data.applicant_data || {};
+  const platforms = data.platforms || [];
+  const statuses = data.statuses || [];
+
+  const activeCount = platforms.filter(p => p.status === 'Active').length;
+  const inProgress = platforms.filter(p => ['Signed Up', 'Assessment'].includes(p.status)).length;
+
+  // ── Summary cards ──
+  let html = `<div class="cards">
+    <div class="card"><div class="label">Platforms</div><div class="value accent">${platforms.length}</div></div>
+    <div class="card"><div class="label">Active On</div><div class="value green">${activeCount}</div></div>
+    <div class="card"><div class="label">In Progress</div><div class="value yellow">${inProgress}</div></div>
+    <div class="card"><div class="label">AI Jobs Found</div><div class="value accent">${setup.ai_job_count || 0}</div></div>
+  </div>`;
+
+  // ── Setup checklist ──
+  const roleOk = setup.role_configured;
+  const resumeOk = setup.resume_exists;
+  html += `<div class="config-section">
+    <h3 style="margin-top:0;">Setup Checklist</h3>
+    <div class="check-item" style="padding-left:0;">
+      <span class="check-icon">${roleOk ? '&#9989;' : '&#10060;'}</span>
+      <span class="check-label">AI-training role configured</span>
+      <span class="check-detail">${roleOk
+        ? esc(setup.role_label) + ' &middot; searches: ' + esc((setup.search_queries || []).join(', '))
+        : 'Add a role with ID "ai-training" on the Config page to activate the AI-training scrapers'}</span>
+    </div>
+    <div class="check-item" style="padding-left:0;">
+      <span class="check-icon">${resumeOk ? '&#9989;' : '&#9888;&#65039;'}</span>
+      <span class="check-label">AI-training resume PDF</span>
+      <span class="check-detail" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        ${resumeOk
+          ? `${esc(setup.resume_file)} <a href="/api/resumes/${profile}/${esc(setup.resume_file)}" target="_blank" class="btn sm secondary">View PDF</a>`
+          : (setup.resume_file ? esc(setup.resume_file) + ' — not found in resumes folder' : 'No resume linked to the ai-training role')}
+        ${setup.can_generate_resume ? `<button class="btn sm" onclick="generateAIResume('${profile}')">${resumeOk ? 'Regenerate' : 'Generate'} Resume</button>` : ''}
+      </span>
+    </div>
+    <div class="check-item" style="padding-left:0;border-bottom:none;">
+      <span class="check-icon">${activeCount > 0 ? '&#9989;' : '&#9888;&#65039;'}</span>
+      <span class="check-label">Platform signups</span>
+      <span class="check-detail">${activeCount} active, ${inProgress} in progress, ${platforms.length - activeCount - inProgress} not started — track each below</span>
+    </div>
+  </div>`;
+
+  // ── Applicant data used for signups ──
+  const skills = (ad.key_skills || []).join(', ');
+  const portfolios = (ad.portfolio_urls || []).map(u =>
+    `<a href="${esc(u)}" target="_blank">${esc(u)}</a>`).join(' &middot; ');
+  html += `<div class="config-section">
+    <h3 style="margin-top:0;">Your AI Resume / Signup Data</h3>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">
+      This is the data to use when creating platform accounts — pulled from your profile.
+      Edit it on the Config page; regenerate the resume after changes.</p>
+    <div class="field-row"><strong style="min-width:110px">Name:</strong> ${esc(ad.name)}</div>
+    <div class="field-row"><strong style="min-width:110px">Email:</strong> ${esc(ad.email)}</div>
+    <div class="field-row"><strong style="min-width:110px">Phone:</strong> ${esc(ad.phone)}</div>
+    <div class="field-row"><strong style="min-width:110px">Location:</strong> ${esc(ad.location)}</div>
+    <div class="field-row"><strong style="min-width:110px">Current Role:</strong> ${esc(ad.current_role)} (${ad.experience_years || 0} yrs experience)</div>
+    <div class="field-row"><strong style="min-width:110px">Skills:</strong> ${esc(skills)}</div>
+    <div class="field-row" style="border-bottom:none;"><strong style="min-width:110px">Portfolio:</strong> ${portfolios || '<span style="color:var(--text-dim)">None</span>'}</div>
+  </div>`;
+
+  // ── Honest-work policy note ──
+  html += `<div class="config-section" style="border-color:var(--yellow);">
+    <div style="display:flex;gap:10px;align-items:flex-start;">
+      <span style="font-size:18px;">&#9888;&#65039;</span>
+      <div style="font-size:12.5px;color:var(--text);line-height:1.5;">
+        <strong>Human-only work policy.</strong> Every platform below prohibits submitting
+        AI-generated task work and actively screens for it (style analysis, honeypot tasks,
+        screen monitoring). Detected accounts are banned and pay is withheld. This system
+        automates <em>finding gigs, tracking signups, and preparing your resume</em> — the
+        annotation/training tasks themselves must be your own work.
+      </div>
+    </div>
+  </div>`;
+
+  // ── Platform directory table ──
+  html += `<h3>Platform Directory <span style="font-weight:400;color:var(--text-dim);">(pay ranges are approximate — verify at signup)</span></h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Platform</th><th>Tier</th><th>Focus</th><th>Pay (approx)</th><th>Signup Process</th><th>Status</th><th>Notes</th></tr></thead>
+    <tbody>${platforms.map(p => {
+      const tier = AI_TIER_COLORS[p.tier] || AI_TIER_COLORS['backup'];
+      const statusColor = AI_STATUS_COLORS[p.status] || 'var(--text-dim)';
+      return `<tr>
+        <td><a href="${esc(p.url)}" target="_blank" style="font-weight:600;">${esc(p.name)}</a>
+          <div style="font-size:11px;color:var(--text-dim);white-space:normal;">${p.updated ? 'Updated ' + esc(p.updated) : ''}</div></td>
+        <td><span class="badge" style="background:${tier.bg};color:${tier.fg};">${esc(p.tier)}</span></td>
+        <td style="white-space:normal;max-width:220px;" title="${esc(p.notes ? p.focus + ' — ' + p.notes : p.focus)}">${esc(p.focus)}</td>
+        <td style="white-space:normal;">${esc(p.pay)}</td>
+        <td style="white-space:normal;max-width:200px;">${esc(p.signup)}</td>
+        <td><select onchange="updateAIPlatform('${profile}','${p.id}','status',this.value)"
+          style="background:var(--surface2);border:1px solid var(--border);color:${statusColor};padding:5px 8px;border-radius:5px;font-size:12px;font-weight:600;">
+          ${statuses.map(s => `<option value="${esc(s)}" ${p.status === s ? 'selected' : ''}>${esc(s)}</option>`).join('')}
+        </select></td>
+        <td style="min-width:160px;"><input type="text" class="notes-input" value="${esc(p.notes)}" placeholder="Notes..."
+          onchange="updateAIPlatform('${profile}','${p.id}','notes',this.value)"></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+
+  return html;
+}
+
+async function updateAIPlatform(profile, platformId, field, value) {
+  const res = await api(`/api/ai-training/${profile}/platforms/${platformId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ [field]: value }),
+  });
+  if (res.ok) {
+    toast('Platform updated');
+    if (field === 'status') loadAITraining();
+  } else {
+    toast(res.error || 'Update failed', true);
+  }
+}
+
+async function generateAIResume(profile) {
+  toast('Generating resume...');
+  const res = await api(`/api/ai-training/${profile}/generate-resume`, { method: 'POST' });
+  if (res.ok) {
+    toast(`Generated ${res.filename}`);
+    loadAITraining();
+  } else {
+    toast(res.error || 'Generation failed', true);
+  }
+}
+
 // ── Config ─────────────────────────────────────────────
 async function loadConfig() {
   const toRender = getProfilesToRender();
@@ -1321,7 +1499,8 @@ async function loadResumes() {
 
   for (const profile of toRender) {
     const resumes = await api(`/api/resumes/${profile}`);
-    const content = renderResumesBody(profile, resumes);
+    const rolesData = await api(`/api/profiles/${profile}/roles`);
+    const content = renderResumesBody(profile, resumes, rolesData.roles || {});
 
     if (deployedMode) {
       const displayName = allUsers.find(u => u.profile === profile)?.display_name || profile;
@@ -1335,7 +1514,8 @@ async function loadResumes() {
   document.getElementById('resumes-content').innerHTML = html;
 }
 
-function renderResumesBody(profile, resumes) {
+function renderResumesBody(profile, resumes, roles) {
+  roles = roles || {};
   let uploadHTML = `
     <div class="upload-area" onclick="document.getElementById('upload-${profile}').click()">
       <input type="file" id="upload-${profile}" accept=".pdf" onchange="uploadResume('${profile}', this)">
@@ -1344,18 +1524,57 @@ function renderResumesBody(profile, resumes) {
 
   return `${uploadHTML}
     <div class="resume-grid" style="margin-top:12px;">
-      ${resumes.map(r => `
+      ${resumes.map(r => {
+        // Roles whose resume_file points at this PDF = this resume's search parameters
+        const linked = Object.entries(roles).filter(([rid, role]) => role.resume_file === r.filename);
+        let searchHTML;
+        if (linked.length) {
+          searchHTML = linked.map(([rid, role]) => `
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-top:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <span style="font-size:12px;font-weight:600;">&#128269; ${esc(role.label || rid)}</span>
+                <button class="btn sm secondary" onclick="showEditRole('${profile}','${esc(rid)}')">Edit Search</button>
+              </div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+                Searches: ${esc((role.search_queries || []).join(', ')) || 'none'}</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">
+                Salary: ${role.salary_min ? '$' + role.salary_min.toLocaleString() : 'any'} &ndash; ${role.salary_max ? '$' + role.salary_max.toLocaleString() : 'any'}</div>
+            </div>`).join('');
+        } else {
+          searchHTML = `
+            <div style="background:var(--surface2);border:1px dashed var(--border);border-radius:6px;padding:8px 10px;margin-top:8px;
+                        display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:var(--text-dim);">No search parameters — this resume isn't used by any job search</span>
+              <button class="btn sm green" onclick="showAddRoleForResume('${profile}','${esc(r.filename)}')">+ Add Search</button>
+            </div>`;
+        }
+        return `
         <div class="resume-card">
           <div class="filename">${esc(r.filename)}</div>
           <div class="meta">${r.size_kb} KB &middot; ${new Date(r.modified).toLocaleDateString()}</div>
+          ${searchHTML}
           <div style="margin-top:8px;display:flex;gap:6px;">
             <a href="/api/resumes/${profile}/${r.filename}" target="_blank" class="btn sm secondary">View PDF</a>
             <button class="btn sm red" onclick="deleteResume('${profile}','${esc(r.filename)}')">Delete</button>
           </div>
-        </div>
-      `).join('')}
+        </div>`;
+      }).join('')}
       ${resumes.length === 0 ? '<div class="empty-state" style="padding:20px"><p>No resumes yet. Upload a PDF above.</p></div>' : ''}
     </div>`;
+}
+
+async function showAddRoleForResume(profile, filename) {
+  await showAddRole(profile);
+  // Preselect the resume and suggest a label/slug from the filename
+  const sel = document.getElementById('role-modal-resume');
+  if (sel) sel.value = filename;
+  const base = filename.replace(/\.pdf$/i, '').replace(/^[A-Za-z]+_[A-Za-z]+_/, '')
+    .replace(/_?Resume(_2page)?$/i, '').replace(/[_-]+/g, ' ').trim();
+  if (base) {
+    document.getElementById('role-modal-label').value = base.replace(/([a-z])([A-Z])/g, '$1 $2');
+    document.getElementById('role-modal-id').value = base.toLowerCase()
+      .replace(/([a-z])([A-Z])/g, '$1-$2').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
 }
 
 async function uploadResume(profile, input) {
@@ -1783,7 +2002,9 @@ async function saveRoleModal() {
   if (res.ok) {
     toast(isEdit ? `Role "${label || roleId}" updated!` : `Role "${label || roleId}" added!`);
     hideRoleModal();
-    loadConfig();
+    // Refresh whichever page the modal was opened from (Config or Resumes)
+    const activePage = document.querySelector('.page.active')?.id?.replace('page-', '');
+    loadPage(activePage || 'config');
   } else {
     toast(res.error || 'Failed to save role', true);
   }

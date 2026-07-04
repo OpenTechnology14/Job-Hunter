@@ -28,6 +28,8 @@ def run():
                         help="Force web search off (overrides profile setting)")
     parser.add_argument("--no-cleanup", action="store_true",
                         help="Skip removal of stale unapproved jobs")
+    parser.add_argument("--no-ai", action="store_true",
+                        help="Skip AI-training sources even if the profile has an ai-training role")
     parser.add_argument("--browsers", action="store_true",
                         help="Also run LinkedIn + Indeed browser scrape (Phase 1B)")
     parser.add_argument("--no-browsers", action="store_true",
@@ -71,6 +73,21 @@ def run():
             print(f"\n  ⚠️  Web search skipped: {e}")
         except Exception as e:
             print(f"\n  ⚠️  Web search error: {e}")
+
+    # ── Step 1c: AI-training sources (optional) ──────────
+    # Runs when the profile has an "ai-training" role. Scrapes AI-training
+    # company boards (Ashby/Greenhouse/Lever) for trainer/annotation roles.
+    if "ai-training" in ROLE_PROFILES and not args.no_ai:
+        try:
+            from ai_training import scrape_ai_training_sources
+            ai_jobs = scrape_ai_training_sources(
+                max_results=SEARCH_SETTINGS.get("max_results_per_query", 25) * 2)
+            raw_jobs.extend(ai_jobs)
+            print(f"\n  🤖 AI-training sources added {len(ai_jobs)} jobs to the pipeline")
+        except ImportError as e:
+            print(f"\n  ⚠️  AI-training sources skipped: {e}")
+        except Exception as e:
+            print(f"\n  ⚠️  AI-training sources error: {e}")
 
     # ── Step 2: Match (keyword + salary, no AI) ──────────
     from dataclasses import asdict
