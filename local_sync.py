@@ -323,6 +323,18 @@ def _get_existing_urls() -> set:
     return {row.get("URL", "") for row in rows}
 
 
+def _get_existing_keys() -> tuple[set, set]:
+    """URLs and normalized title+company keys already in the CSV.
+    The second set catches the same job re-scraped from a different
+    source (different URL, same posting)."""
+    from quality_filter import _norm_key
+    urls, keys = set(), set()
+    for row in _read_all_rows():
+        urls.add(row.get("URL", ""))
+        keys.add(_norm_key(row.get("Job Title", ""), row.get("Company", "")))
+    return urls, keys
+
+
 def cleanup_stale_jobs(**kwargs):
     """
     Remove old unapproved jobs from the CSV based on job posting date.
@@ -392,17 +404,24 @@ def cleanup_stale_jobs(**kwargs):
 
 
 def push_jobs(jobs: list[dict], **kwargs):
-    """Append matched jobs to the local CSV. Skips duplicates by URL."""
+    """Append matched jobs to the local CSV.
+    Skips duplicates by URL and by normalized title+company (the same
+    posting scraped from two boards has two URLs but one title+company)."""
     _ensure_file()
-    existing_urls = _get_existing_urls()
+    from quality_filter import _norm_key
+    existing_urls, existing_keys = _get_existing_keys()
     today = datetime.now().strftime("%Y-%m-%d")
 
     new_rows = []
     skipped = 0
+    dupes = 0
     for job in jobs:
         url = job.get("url", "")
-        if url in existing_urls:
+        key = _norm_key(job.get("title", ""), job.get("company", ""))
+        if url in existing_urls or key in existing_keys:
+            dupes += 1
             continue
+        existing_keys.add(key)
 
         work_type = _detect_work_type(job)
 
@@ -429,8 +448,11 @@ def push_jobs(jobs: list[dict], **kwargs):
             "Notes": "",
         })
 
+    if dupes:
+        print(f"  ⏭️  Skipped {dupes} duplicates (URL or title+company already in sheet)")
     if skipped:
-        print(f"  ⏭️  Skipped {skipped} jobs (not Remote or near Nashua NH)")
+        print(f"  ⏭️  Skipped {skipped} jobs (not Remote or near "
+              f"{LOCATION_FILTER.get('city', '')} {LOCATION_FILTER.get('state', '')})")
 
     if not new_rows:
         print("  No new jobs to add.")

@@ -62,6 +62,19 @@ ROLE_PROFILES = {
     #     "resume_file": "FirstLast_AITraining.pdf",
     #     "search_queries": ["AI Trainer", "Data Annotator", "AI Tutor", "Search Quality Rater"],
     # },
+    # Part-time contract work with a weekly hour cap. "freelance_boards"
+    # activates scraper_freelance.py (Freelancer.com API + saved part-time
+    # searches on Upwork/PeoplePerHour/Guru/Braintrust). "max_hours_per_week"
+    # also filters regular job boards to part-time/contract-signal postings.
+    # "contractor": {
+    #     "label": "IT Contractor (part-time)",
+    #     "salary_min": 0,        # hourly/per-project rates — keep 0
+    #     "salary_max": 200000,
+    #     "resume_file": "FirstLast_Contractor.pdf",
+    #     "search_queries": ["IT Automation", "Automation Consultant", "Fractional IT"],
+    #     "max_hours_per_week": 10,
+    #     "freelance_boards": True,
+    # },
 }
 
 INTERESTING_ROLE = {

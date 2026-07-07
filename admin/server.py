@@ -175,9 +175,18 @@ def get_location_filter(name):
     return jsonify(data.get("location_filter", {}))
 
 
+# SEARCH_SETTINGS keys the UI may toggle/edit, by type. Anything not
+# listed is rejected (the endpoint rewrites profile source — be strict).
+SETTINGS_BOOL_KEYS = {
+    "web_search", "browser_scrape",
+    "filter_title_relevance", "filter_usd_only", "filter_aggregators",
+}
+SETTINGS_INT_KEYS = {"stale_days", "filter_min_budget"}
+
+
 @app.route("/api/profiles/<name>/search-settings", methods=["PATCH"])
 def update_search_settings(name):
-    """Update specific search settings in the profile .py file."""
+    """Update whitelisted search settings in the profile .py file."""
     profile_file = PROFILES_DIR / f"{name}.py"
     if not profile_file.exists():
         return jsonify({"error": "Profile not found"}), 404
@@ -186,43 +195,25 @@ def update_search_settings(name):
     content = profile_file.read_text()
 
     for key, value in updates.items():
-        if key == "web_search":
-            # Toggle web_search: True/False
+        if key in SETTINGS_BOOL_KEYS:
             val_str = "True" if value else "False"
-            # Try to replace existing key
-            new_content = re.sub(
-                r'("web_search"\s*:\s*)(True|False)',
-                rf'\g<1>{val_str}',
-                content,
-            )
-            if new_content == content:
-                # Key doesn't exist — insert before closing brace of SEARCH_SETTINGS
-                new_content = content.replace(
-                    '"max_results_per_query"',
-                    f'"max_results_per_query"',
-                )
-                # Find the last line before SEARCH_SETTINGS closing }
-                new_content = re.sub(
-                    r'(SEARCH_SETTINGS\s*=\s*\{[^}]*)',
-                    rf'\g<1>\n    "web_search": {val_str},',
-                    content, count=1,
-                )
-            content = new_content
+            pattern = rf'("{key}"\s*:\s*)(True|False)'
+        elif key in SETTINGS_INT_KEYS:
+            val_str = str(int(value) if value else 0)
+            pattern = rf'("{key}"\s*:\s*)\d+'
+        else:
+            continue  # unknown key — ignore
 
-        elif key == "stale_days":
-            val_int = int(value) if value else 0
+        new_content = re.sub(pattern, rf'\g<1>{val_str}', content)
+        if new_content == content:
+            # Key not present in the profile — insert at the top of
+            # SEARCH_SETTINGS so it overrides the config.py default.
             new_content = re.sub(
-                r'("stale_days"\s*:\s*)\d+',
-                rf'\g<1>{val_int}',
-                content,
+                r'(SEARCH_SETTINGS\s*=\s*\{)',
+                rf'\g<1>\n    "{key}": {val_str},',
+                content, count=1,
             )
-            if new_content == content:
-                new_content = re.sub(
-                    r'(SEARCH_SETTINGS\s*=\s*\{[^}]*)',
-                    rf'\g<1>\n    "stale_days": {val_int},',
-                    content, count=1,
-                )
-            content = new_content
+        content = new_content
 
     profile_file.write_text(content)
     return jsonify({"ok": True})
@@ -361,9 +352,12 @@ _running = {}
 @app.route("/api/scrape/<profile>", methods=["POST"])
 def run_scrape(profile):
     scrape_type = request.json.get("type", "api")  # "api", "browser", "both"
+    role = (request.json.get("role") or "").strip()  # optional: single-role check
 
-    if profile in _running:
+    if any(k.startswith(f"{profile}_") for k in _running):
         return jsonify({"error": "Already running", "status": "running"}), 409
+
+    log_type = f"check: {role}" if role else scrape_type
 
     def _run(cmd, key):
         try:
@@ -374,7 +368,7 @@ def run_scrape(profile):
                 env={**os.environ, "PYTHONUNBUFFERED": "1"},
             )
             _append_run_log(profile, {
-                "type": scrape_type,
+                "type": log_type,
                 "date": datetime.now().isoformat(),
                 "status": "complete" if result.returncode == 0 else "error",
                 "stdout": result.stdout[-2000:] if result.stdout else "",
@@ -383,7 +377,7 @@ def run_scrape(profile):
             })
         except subprocess.TimeoutExpired:
             _append_run_log(profile, {
-                "type": scrape_type,
+                "type": log_type,
                 "date": datetime.now().isoformat(),
                 "status": "timeout",
             })
@@ -393,8 +387,12 @@ def run_scrape(profile):
     venv_python = str(PROJECT_ROOT / "venv" / "bin" / "python")
 
     if scrape_type in ("api", "both"):
-        key = f"{profile}_api"
+        key = f"{profile}_api_{role}" if role else f"{profile}_api"
         cmd = [venv_python, "run_scrape.py", "--profile", profile]
+        if role:
+            # Individual check: scope to one role, skip the slow browser
+            # scrape — targeted checks should come back in a few minutes.
+            cmd += ["--role", role, "--no-browsers"]
         # Check if web search is enabled for this profile
         profile_data = _load_profile_module(profile)
         if profile_data:
@@ -404,7 +402,7 @@ def run_scrape(profile):
             if not ss.get("stale_days", 30):
                 cmd.append("--no-cleanup")
             # Include browser scrape in the API run if "both" or profile enables it
-            if scrape_type == "both" or ss.get("browser_scrape", False):
+            if not role and (scrape_type == "both" or ss.get("browser_scrape", False)):
                 cmd.append("--browsers")
         _running[key] = True
         threading.Thread(target=_run, args=(cmd, key), daemon=True).start()
@@ -447,6 +445,20 @@ def update_form_config(profile):
     with open(config_path, "w") as f:
         json.dump(request.json, f, indent=2)
     return jsonify({"ok": True})
+
+
+@app.route("/api/form-config/<profile>/seed", methods=["POST"])
+def seed_form_config_endpoint(profile):
+    """Merge the ATS field catalog (ats_fields.py) into the profile's
+    form config. reset=true rebuilds from scratch."""
+    profile_data = _load_profile_module(profile)
+    if not profile_data:
+        return jsonify({"error": "Profile not found"}), 404
+
+    reset = bool((request.json or {}).get("reset", False))
+    from ats_fields import seed_form_config
+    result = seed_form_config(profile, profile_data.get("user_profile", {}), reset=reset)
+    return jsonify({"ok": True, **result})
 
 
 # ── Resume endpoints ────────────────────────────────────
@@ -740,10 +752,15 @@ LOCATION_FILTER = {{
     (out / "resumes").mkdir(parents=True, exist_ok=True)
     (out / "data").mkdir(parents=True, exist_ok=True)
 
-    # Copy form config example
-    example_cfg = PROJECT_ROOT / "form_config_example.json"
-    if example_cfg.exists():
-        shutil.copy(example_cfg, out / "form_config.json")
+    # Seed form config from the ATS field catalog (falls back to the
+    # static example if the catalog import fails)
+    try:
+        from ats_fields import seed_form_config
+        seed_form_config(name, user_info, reset=True)
+    except Exception:
+        example_cfg = PROJECT_ROOT / "form_config_example.json"
+        if example_cfg.exists():
+            shutil.copy(example_cfg, out / "form_config.json")
 
     return jsonify({"ok": True, "name": name})
 
@@ -864,6 +881,7 @@ def _write_role_profiles(name, roles):
         src_lines = f.readlines()
 
     # Build the new ROLE_PROFILES block
+    STANDARD_KEYS = ["label", "salary_min", "salary_max", "resume_file", "search_queries"]
     new_lines = ["ROLE_PROFILES = {\n"]
     for rid, role in roles.items():
         new_lines.append(f'    "{rid}": {{\n')
@@ -872,6 +890,11 @@ def _write_role_profiles(name, roles):
         new_lines.append(f'        "salary_max": {role.get("salary_max", 0)},\n')
         new_lines.append(f'        "resume_file": {repr(role.get("resume_file", ""))},\n')
         new_lines.append(f'        "search_queries": {repr(role.get("search_queries", []))},\n')
+        # Preserve non-standard keys (max_hours_per_week, freelance_boards, ...)
+        # so a UI edit doesn't silently strip behavior flags from the profile.
+        for key, value in role.items():
+            if key not in STANDARD_KEYS:
+                new_lines.append(f'        {repr(key)}: {repr(value)},\n')
         new_lines.append("    },\n")
     new_lines.append("}\n")
 

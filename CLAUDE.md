@@ -41,7 +41,10 @@ job-hunter/
 ├── scraper_extended.py      ← Extended scrapers (sources 7-17)
 ├── scraper_web.py           ← Internet-wide search (DuckDuckGo + career pages)
 ├── ai_training.py           ← AI-training module: platform directory + scrapers (sources 18-20)
+├── scraper_freelance.py     ← Freelance boards: Freelancer.com API + saved part-time searches (source 21)
 ├── matcher.py               ← Keyword + salary matching (no AI)
+├── quality_filter.py        ← Result hygiene: relevance, USD/budget, aggregator pages, dedupe
+├── ats_fields.py            ← Auto-fill field catalog from real ATS forms (Greenhouse/Lever/Workday/...)
 ├── browser_apply.py         ← Playwright browser automation
 ├── resume_picker.py         ← Maps role → resume PDF
 ├── run_scrape.py            ← Phase 1A: API scrape → jobs.csv (+ web search + stale cleanup)
@@ -218,12 +221,20 @@ python run_scrape.py --profile alex
 Scrapes 11 job board APIs + internet-wide search (DuckDuckGo + company career
 pages). If the profile has an `ai-training` role, also scrapes AI-training
 company boards (xAI Tutors, Mercor, Scale AI... — see `ai_training.py`).
+Roles with `"freelance_boards": True` also hit freelance boards
+(Freelancer.com API + saved part-time searches — see `scraper_freelance.py`);
+their `"max_hours_per_week"` cap filters regular boards to postings with
+part-time/contract signals.
 Automatically cleans up stale unapproved jobs older than 30 days.
 Results go to `output/{profile}/jobs.csv`.
 
 **Flags:**
 - `--web` — Force web search even if `web_search: False` in profile
 - `--no-ai` — Skip AI-training sources for this run
+- `--no-freelance` — Skip freelance boards for this run
+- `--role <id>` — Individual check: scrape/match ONE role only (repeatable).
+  Skips stale cleanup and drops unmatched pass-through rows. Also available
+  per-resume in the admin panel (▶ Run Check on Resumes/Config pages).
 - `--no-web` — Skip web search even if `web_search: True` in profile
 - `--no-cleanup` — Skip stale job cleanup for this run
 
@@ -293,6 +304,18 @@ the job passes through for manual review.
 
 Jobs that don't match any role type appear as "Unmatched — Review" in the sheet.
 
+**Quality filters (quality_filter.py):** after matching, every batch passes
+through configurable hygiene filters — title must contain a role keyword
+(catches freelance projects that matched on a stray description word),
+non-USD budgets dropped, freelance projects under a budget floor dropped,
+web-search aggregator pages ("1,000+ jobs — LinkedIn") dropped, and
+duplicates removed by URL *and* normalized title+company (cross-board dupes).
+Toggles live in Admin Panel → Config → Result Quality Filters
+(`filter_title_relevance`, `filter_usd_only`, `filter_min_budget`,
+`filter_aggregators` in SEARCH_SETTINGS). Retro-clean an existing sheet:
+`python quality_filter.py --profile alex --clean [--dry-run]` (never touches
+rows marked Y/Done).
+
 ---
 
 ## Apply Method Column
@@ -358,7 +381,14 @@ python admin/server.py
 - **Jobs** — View/approve/reject jobs from both CSVs, search, filter, sort
 - **AI Training** — AI-training gig setup: platform directory (DataAnnotation, Outlier, Alignerr...) with per-platform signup status tracking, setup checklist, resume generation, and the applicant data used for signups
 - **Config** — View profile info, location filter, role profiles, toggle web search & stale cleanup
-- **Form Fill** — Edit form auto-fill patterns and dropdown defaults
+- **Form Fill** — Edit form auto-fill patterns and dropdown defaults. Seeded
+  from `ats_fields.py`, a catalog of the actual fields on Greenhouse, Lever,
+  Workday, Ashby, iCIMS, Indeed Apply, and LinkedIn Easy Apply forms
+  (labels + "asked on" board tags shown per rule). Dropdown answers support
+  `a|b|c` candidates tried in order since option wording differs per ATS.
+  Re-seed anytime: "Seed from Job-Board Catalog" button, or
+  `python ats_fields.py --profile <name> [--reset]`. New profiles are
+  seeded automatically.
 - **Resumes** — View all resume PDFs with direct PDF viewer links
 - **History** — Scrape/apply run log with timestamps and status
 - **Setup** — System checklist (Python, venv, deps, profiles, per-profile status)

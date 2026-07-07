@@ -1308,6 +1308,98 @@ def generate_alex_freelance_it():
 
 
 # ===================================================================
+# ALEX - IT + Automation Contractor (≤10 hrs/week)
+# ===================================================================
+
+def generate_alex_it_automation_contractor():
+    """Capped-hours contractor resume — built for part-time retainers and
+    small fixed-scope automation projects (max 10 hrs/week alongside
+    full-time work). Distinct from the broader freelance resume: this one
+    leads with the hour cap as a feature and packages small offerings."""
+    pdf = ResumePDF(accent_color=(20, 110, 160))
+    pdf.add_page()
+    pdf.header_block("Alexander Moody",
+        "(603) 943-0051  |  alexmoody1421@gmail.com  |  opentechnologyapp.com  |  opentechnologyblog.com")
+
+    pdf.section_heading("Profile")
+    pdf.summary_text(
+        "IT + automation contractor taking part-time engagements up to 10 hours/week - "
+        "retainers and small fixed-scope projects. The pitch: automation is the highest-leverage "
+        "IT spend there is, and it doesn't need a full-time hire. I build the script, the "
+        "integration, or the workflow once; it saves your team hours every week from then on. "
+        "Proof of delivery is public - a production SaaS app (opentechnologyapp.com) and a "
+        "technical blog (opentechnologyblog.com), both built and operated solo.")
+
+    pdf.section_heading("What Fits in 10 Hours a Week")
+    pdf.bullet("Automation sprints - one manual process scripted end-to-end (Python/PowerShell/"
+        "API): report generation, data syncs between SaaS tools, license audits, employee "
+        "onboarding/offboarding checklists", bold_prefix="Fixed scope: ")
+    pdf.bullet("Ongoing IT/automation retainer - a set monthly block for the automation backlog, "
+        "SaaS administration, access reviews, and 'can you script this?' requests",
+        bold_prefix="Retainer: ")
+    pdf.bullet("Workflow integrations - webhook and API glue between the tools you already pay "
+        "for (Google Workspace, Slack, Jira, HR/EHR systems, spreadsheets)",
+        bold_prefix="Integrations: ")
+    pdf.bullet("Small internal tools - a focused web app (form + database + dashboard) that "
+        "replaces the spreadsheet everyone is afraid to touch", bold_prefix="Micro-apps: ")
+
+    pdf.section_heading("Proof of Work (Live, Public)")
+
+    pdf.job_header("Open Technology App", "opentechnologyapp.com", "Founder / Sole Developer & Operator")
+    pdf.bullet("Production SaaS built solo: React/TypeScript, Express, Postgres, serverless deploy, "
+        "CI/CD - with JWT auth, role-based access, rate limiting, and an automation engine "
+        "(configurable triggers, webhooks, scheduled actions)")
+    pdf.bullet("Built and operated in the margins around a full-time job - direct evidence that "
+        "capped-hours engagements still ship")
+
+    pdf.job_header("Open Technology Blog", "opentechnologyblog.com", "Author & Publisher")
+    pdf.bullet("Applied AI and automation content with working code - LLM integrations, prompt "
+        "patterns, workflow automation architectures")
+
+    pdf.job_header("Job Application Automation Platform", "", "Developer")
+    pdf.bullet("Personal automation platform integrating 15+ job board APIs, browser automation, "
+        "a matching engine, and an admin dashboard - the exact shape of internal tooling "
+        "small teams need")
+
+    pdf.section_heading("Day-Job Track Record (Why You Can Trust the Hours)")
+    pdf.job_header("Eleanor Health", "July 2022 - Present",
+        "Senior IT Support Associate - sole IT/automation operator, 200-person remote company")
+    pdf.bullet("Automated onboarding end-to-end (accounts, imaging, SaaS access, compliance "
+        "verification): 2 days of manual work became a 4-hour pipeline - the ROI model "
+        "every engagement targets")
+    pdf.bullet("Python/PowerShell automation for provisioning, license auditing, and compliance "
+        "reporting across 30+ SaaS platforms")
+    pdf.bullet("Multi-cadence access audits, zero failures in 4 years, HIPAA-aware environment - "
+        "small-block recurring work delivered reliably is literally my job")
+    pdf.bullet("Every system documented to run without me - contractors who leave good docs "
+        "are the ones who get called back")
+
+    pdf.section_heading("Technical Skills")
+    pdf.skills_line("Automation: Python, PowerShell, REST APIs, webhooks, Playwright, cron/"
+        "scheduled tasks, data pipelines, Zapier-style workflow design (built custom)")
+    pdf.skills_line("Development: TypeScript, React, Express/Node.js, SQL, Supabase (Postgres), "
+        "Vercel serverless, Git/GitHub, CI/CD")
+    pdf.skills_line("IT Operations: SaaS administration (30+ platforms), identity & access "
+        "management, Google Workspace, endpoint management, Windows Server, Cisco networking")
+    pdf.skills_line("AI: LLM integrations, prompt engineering, AI-assisted workflow design")
+
+    pdf.section_heading("Engagement Terms")
+    pdf.context_paragraph(
+        "Up to 10 hours/week, hourly or fixed-scope. Async-first (email/Slack/Loom) with "
+        "scheduled calls as needed; evenings and weekends US-Eastern work fine. Every project "
+        "ends with documentation and a handoff - you own everything I build. Remote from "
+        "New Hampshire, US.")
+
+    pdf.section_heading("Education")
+    pdf.edu_entry("Southern New Hampshire University", "BS Computer Science", "June 2022")
+    pdf.edu_entry("Nashua Community College", "AS Computer Networking - Cisco curriculum", "May 2020")
+
+    out = Path("output/alex/resumes/Alex_Moody_ITAutomationContractor_Resume.pdf")
+    pdf.output(str(out))
+    print(f"  Generated: {out}")
+
+
+# ===================================================================
 # Main — run all, or a single resume via --only <key>
 # ===================================================================
 
@@ -1320,6 +1412,7 @@ GENERATORS = {
     "alex-saas-ops": generate_alex_saas_ops,
     "alex-ai-training": generate_alex_ai_training,
     "alex-freelance-it": generate_alex_freelance_it,
+    "alex-it-automation-contractor": generate_alex_it_automation_contractor,
     "marcelli-care-coord": generate_marcelli_care_coord_2page,
     "marcelli-coding-billing": generate_marcelli_coding_billing_2page,
     "marcelli-direct-care": generate_marcelli_direct_care_2page,

@@ -152,6 +152,36 @@ automates finding gigs and tracking signups — not the task work itself.
 
 ---
 
+## Freelance Boards Module (`scraper_freelance.py`)
+
+For part-time / capped-hours contract work (e.g. the "IT + Automation
+Contractor (≤10 hrs/wk)" role). Two mechanisms:
+
+**1. Freelancer.com API (source 21).** Free public API, no auth. Real project
+listings searched with the role's queries. Hourly projects whose posted weekly
+commitment exceeds the role's `max_hours_per_week` are dropped; projects with
+no stated commitment pass through for manual review (same philosophy as the
+no-salary-listed rule).
+
+**2. Saved part-time searches (bot-blocked boards).** Upwork, PeoplePerHour,
+Guru, and Braintrust block scraping, so instead each gets ONE row in
+`jobs.csv` with a prebuilt search URL (Upwork's includes the part-time
+workload filters). Click the row's link, browse, apply on-platform. URL-based
+dedupe means these rows are written once, not re-added every run.
+
+**Activation:** add `"freelance_boards": True` to any role in `ROLE_PROFILES`.
+Optionally add `"max_hours_per_week": 10` — this also gates *regular* job-board
+results for that role: postings must contain a part-time/contract/freelance
+signal in the title or description, so full-time listings that keyword-match
+the role's queries get filtered out. Skip for one run with `--no-freelance`.
+
+**Test standalone:**
+```bash
+python scraper_freelance.py --profile alex
+```
+
+---
+
 ## Adding Custom Companies
 
 ### Greenhouse

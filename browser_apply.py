@@ -143,11 +143,13 @@ def fill_form_fields(page: Page):
                 filled = True
                 break
 
-        # Try custom field patterns from form_config.json
+        # Try custom field patterns from form_config.json.
+        # "a|b|c" values are dropdown candidates — for a text input the
+        # first candidate is the answer.
         if not filled:
             for rule in CUSTOM_FIELDS:
                 pattern = rule.get("pattern", "")
-                value = rule.get("value", "")
+                value = (rule.get("value", "") or "").split("|")[0].strip()
                 if pattern and value and re.search(pattern, identifier):
                     try:
                         inp.fill(value)
@@ -171,16 +173,23 @@ def fill_form_fields(page: Page):
 
         for rule in SELECT_DEFAULTS:
             pattern = rule.get("pattern", "")
-            value = rule.get("value", "")
-            if pattern and value and re.search(pattern, identifier):
-                try:
-                    sel.select_option(label=value)
-                    print(f"    ✏️  select({pattern}): {value}")
-                except Exception:
+            raw_value = rule.get("value", "")
+            if pattern and raw_value and re.search(pattern, identifier):
+                # "a|b|c" = candidate answers tried in order — dropdown
+                # option wording differs per ATS ("Decline To Self
+                # Identify" on Greenhouse vs "Prefer not to say" on Lever)
+                for candidate in [v.strip() for v in raw_value.split("|") if v.strip()]:
                     try:
-                        sel.select_option(value=value)
+                        sel.select_option(label=candidate)
+                        print(f"    ✏️  select({pattern}): {candidate}")
+                        break
                     except Exception:
-                        pass
+                        try:
+                            sel.select_option(value=candidate)
+                            print(f"    ✏️  select({pattern}): {candidate}")
+                            break
+                        except Exception:
+                            continue
                 break
 
 

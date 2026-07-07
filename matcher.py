@@ -66,6 +66,36 @@ def salary_in_range(job_salary: str, role_min: int, role_max: int) -> tuple[bool
     return True, f"${sal_min:,}-${sal_max:,} fits ${role_min:,}-${role_max:,}"
 
 
+# Signals that a posting is compatible with a capped-hours schedule.
+# Used for roles that set "max_hours_per_week" — a full-time posting is
+# affirmatively unusable for those roles, so (unlike the salary rule)
+# missing signals mean skip, not pass-through.
+PART_TIME_SIGNALS = [
+    "part-time", "part time", "freelance", "contract", "contractor",
+    "hourly", "fractional", "temporary", "temp ", "per project",
+    "project-based", "project based", "moonlight", "side project",
+    "flexible hours", "as needed", "retainer", "consultant", "consulting",
+    "10 hours", "5-10", "10-15",
+]
+
+
+def passes_hours_cap(job: dict, role: dict) -> tuple[bool, str]:
+    """
+    Roles with max_hours_per_week require a part-time/contract signal
+    somewhere in the title or description. Scraper-hinted rows skip this
+    check upstream (freelance boards pre-filter by commitment).
+    """
+    max_hours = role.get("max_hours_per_week", 0)
+    if not max_hours:
+        return True, ""
+
+    text = f"{job.get('title', '')} {job.get('description', '')}".lower()
+    for signal in PART_TIME_SIGNALS:
+        if signal in text:
+            return True, f"≤{max_hours}h/wk ok ('{signal.strip()}')"
+    return False, f"No part-time/contract signal (role capped at {max_hours} hrs/wk)"
+
+
 def match_title_to_role(title: str) -> tuple[str, str, float]:
     """
     Match a job title to a role profile using keyword matching.
@@ -143,6 +173,15 @@ def match_jobs(jobs: list[dict]) -> list[dict]:
                 salary, role["salary_min"], role["salary_max"]
             )
             resume_file = role.get("resume_file", "")
+
+            # Hours cap — only for title-matched jobs. Hinted rows come
+            # from freelance scrapers that already filtered commitment.
+            if not role_hint:
+                hours_pass, hours_reason = passes_hours_cap(job, role)
+                if not hours_pass:
+                    continue
+                if hours_reason:
+                    sal_reason = f"{sal_reason} · {hours_reason}"
 
         if not sal_pass:
             continue  # Salary out of range, skip
