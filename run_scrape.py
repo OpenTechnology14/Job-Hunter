@@ -30,6 +30,12 @@ def run():
                         help="Skip removal of stale unapproved jobs")
     parser.add_argument("--no-ai", action="store_true",
                         help="Skip AI-training sources even if the profile has an ai-training role")
+    parser.add_argument("--no-freelance", action="store_true",
+                        help="Skip freelance boards even if a role enables freelance_boards")
+    parser.add_argument("--role", action="append",
+                        help="Run the check for a single role id only (repeatable, "
+                             "e.g. --role it-automation-contractor). Scopes scraping, "
+                             "matching, web/AI/freelance sources to that role.")
     parser.add_argument("--browsers", action="store_true",
                         help="Also run LinkedIn + Indeed browser scrape (Phase 1B)")
     parser.add_argument("--no-browsers", action="store_true",
@@ -39,8 +45,28 @@ def run():
     print(f"\n🔍 Phase 1: Scrape & Match")
     print(f"{'='*60}")
 
+    # ── Role filter: individual check for selected role(s) ──
+    # ROLE_PROFILES is the same dict object imported by scraper, matcher,
+    # and the browser scraper, so filtering it in place scopes every
+    # downstream step to the selected role(s).
+    if args.role:
+        unknown = [r for r in args.role if r not in ROLE_PROFILES]
+        if unknown:
+            print(f"\n❌ Unknown role(s): {', '.join(unknown)}")
+            print(f"   Available: {', '.join(ROLE_PROFILES)}")
+            return
+        keep = set(args.role)
+        for rid in [r for r in ROLE_PROFILES if r not in keep]:
+            del ROLE_PROFILES[rid]
+        print(f"  🎯 Individual check — role(s): {', '.join(keep)}")
+
     # ── Step 0: Clean up stale jobs ──────────────────────
-    if not args.no_cleanup:
+    # Skipped on individual checks: a targeted run shouldn't delete
+    # other roles' rows that this run won't re-scrape.
+    if args.role:
+        if not args.no_cleanup:
+            print("  (stale cleanup skipped — targeted role check)")
+    elif not args.no_cleanup:
         cleanup_stale_jobs()
 
     # ── Step 1: Scrape job boards ────────────────────────
@@ -89,6 +115,28 @@ def run():
         except Exception as e:
             print(f"\n  ⚠️  AI-training sources error: {e}")
 
+    # ── Step 1d: Freelance boards (optional) ─────────────
+    # Runs for every role with "freelance_boards": True. Scrapes the
+    # Freelancer.com API (hour-capped) and writes saved part-time search
+    # rows for bot-blocked boards (Upwork, PeoplePerHour, Guru, Braintrust).
+    freelance_roles = {rid: r for rid, r in ROLE_PROFILES.items()
+                       if r.get("freelance_boards")}
+    if freelance_roles and not args.no_freelance:
+        try:
+            from scraper_freelance import scrape_freelance_sources
+            for rid, role in freelance_roles.items():
+                fl_jobs = scrape_freelance_sources(
+                    role["search_queries"], rid,
+                    max_hours=role.get("max_hours_per_week", 0),
+                    max_results=SEARCH_SETTINGS.get("max_results_per_query", 25),
+                )
+                raw_jobs.extend(fl_jobs)
+                print(f"\n  💼 Freelance boards added {len(fl_jobs)} rows for '{rid}'")
+        except ImportError as e:
+            print(f"\n  ⚠️  Freelance boards skipped: {e}")
+        except Exception as e:
+            print(f"\n  ⚠️  Freelance boards error: {e}")
+
     # ── Step 2: Match (keyword + salary, no AI) ──────────
     from dataclasses import asdict
     raw_dicts = []
@@ -96,6 +144,24 @@ def run():
         raw_dicts.append(asdict(j) if hasattr(j, '__dataclass_fields__') else j)
 
     matched = match_jobs(raw_dicts)
+
+    # Individual check: keep only the selected role(s). The usual
+    # "Unmatched — Review" pass-through is noise here — those titles
+    # came from this role's queries but didn't fit its filters.
+    if args.role:
+        before = len(matched)
+        matched = [m for m in matched if m["role_category"] in set(args.role)]
+        if before != len(matched):
+            print(f"  🎯 Role filter: kept {len(matched)}/{before} matched jobs")
+
+    # ── Step 2b: Quality filters ─────────────────────────
+    # Relevance, currency/budget, aggregator-page, and duplicate hygiene.
+    # Config-driven — see quality_filter.py and the Config page toggles.
+    try:
+        from quality_filter import apply_quality_filters
+        matched = apply_quality_filters(matched)
+    except ImportError as e:
+        print(f"\n  ⚠️  Quality filters skipped: {e}")
 
     # Save matched results locally
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")

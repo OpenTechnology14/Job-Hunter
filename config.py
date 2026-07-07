@@ -54,6 +54,11 @@ ROLE_PROFILES = _profile.ROLE_PROFILES
 _DEFAULT_SEARCH_SETTINGS = {
     "stale_days": 21,
     "web_search": False,
+    # Result quality filters (see quality_filter.py)
+    "filter_title_relevance": True,   # job title must hit a role keyword
+    "filter_usd_only": True,          # drop non-USD budgets (foreign-client gigs)
+    "filter_min_budget": 25,          # USD floor for freelance projects (0 = off)
+    "filter_aggregators": True,       # drop "1,000+ jobs" search-listing pages
 }
 SEARCH_SETTINGS = {**_DEFAULT_SEARCH_SETTINGS, **_profile.SEARCH_SETTINGS}
 INTERESTING_ROLE = getattr(_profile, "INTERESTING_ROLE", {
