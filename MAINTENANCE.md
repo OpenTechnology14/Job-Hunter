@@ -41,6 +41,21 @@ Each scraper function takes search queries + location and returns a list of job 
 - Enabled by `web_search: True` in profile SEARCH_SETTINGS or `--web` flag
 - Disabled with `--no-web` flag
 
+### AI-training gigs (`ai_training.py`)
+- Runs when the profile has a role with id exactly `ai-training` (skip with `--no-ai`)
+- Two parts: a curated **platform directory** (15 signup-based marketplaces —
+  DataAnnotation, Outlier, Alignerr, Mercor…) tracked per profile in
+  `output/{profile}/ai_training.json`, and **scrapers** for real postings on
+  Ashby/Greenhouse/Lever boards, title-filtered to trainer/annotator/rater roles
+- Rows carry `role_hint="ai-training"` so the matcher force-assigns the category
+- Add companies via `ASHBY_AI_COMPANIES` / `GREENHOUSE_AI_COMPANIES` / `LEVER_AI_COMPANIES`
+
+### Freelance / part-time boards (`scraper_freelance.py`)
+- Runs for any role with `"freelance_boards": True` (skip with `--no-freelance`)
+- Freelancer.com public API (hour-capped when `max_hours_per_week` is set) plus
+  one saved-search row per bot-blocked board (Upwork, PeoplePerHour, Guru, Braintrust)
+- A loose relevance filter drops off-topic API hits (Freelancer's query match is broad)
+
 ---
 
 ## 2. Matcher (`matcher.py`)
@@ -55,10 +70,40 @@ Two filters applied in sequence:
 ### Role assignment
 Jobs are assigned to the first matching role profile. If no role matches, the job appears as "Unmatched - Review" in the spreadsheet.
 
+### Hours cap (part-time roles)
+- A role may set `"max_hours_per_week": N`. Title-matched jobs for that role
+  must then show a part-time/contract/freelance signal in the title or
+  description, or they're dropped (full-time postings can't fit the cap).
+- Rows that arrive with a `role_hint` (freelance scrapers) bypass this — they
+  were already filtered by stated weekly commitment upstream.
+
+### Role assignment override
+- A scraped row may carry `role_hint`; if it names a real role, the matcher
+  assigns that role directly instead of keyword-matching the title.
+
 ### Tuning
 - **Too few results:** Broaden `search_queries`, widen salary range
 - **Too many irrelevant results:** Add terms to `exclude_keywords` in `SEARCH_SETTINGS`
 - **Wrong category:** Reorder role profiles (first match wins)
+
+---
+
+## 2b. Quality Filters (`quality_filter.py`)
+
+Post-match hygiene, applied in `run_scrape.py` right after `match_jobs()` and
+toggleable per profile via `SEARCH_SETTINGS` (and the admin Config page):
+
+- `filter_title_relevance` — title must contain a role keyword (with light stemming)
+- `filter_usd_only` — drop non-USD budgets (foreign-client gigs)
+- `filter_min_budget` — USD floor for freelance-project rows (0 = off)
+- `filter_aggregators` — drop web-search "1,000+ jobs" listing pages
+- Cross-source dedupe by normalized title+company (catches the same posting
+  from two boards, which URL dedupe misses). `local_sync.push_jobs` applies the
+  same title+company key against rows already in the CSV.
+
+Saved-search rows (`🔎 …`) are always exempt. Retro-clean an existing sheet
+with `python quality_filter.py --profile <p> --clean [--dry-run]` — approved
+(`Y`/`Done`) rows are never touched.
 
 ---
 
@@ -105,7 +150,31 @@ The automation looks for common form patterns:
 - File input elements (resume upload)
 - Text inputs with labels matching known fields (name, email, phone)
 - Select dropdowns matched against `select_defaults` patterns
+- EEO/self-ID comboboxes (rendered as `<input>` on Greenhouse) — matched
+  against the same `select_defaults` rules as a fallback on text inputs
 - Submit/Apply buttons
+
+### Auto-fill field catalog (`ats_fields.py`)
+- `form_config.json` is seeded from a catalog of the real fields on
+  Greenhouse, Lever, Workday, Ashby, iCIMS, Indeed, and LinkedIn forms
+- `seed_form_config()` merges missing rules in without overwriting edited
+  values; `--reset` rebuilds from scratch. New profiles seed automatically;
+  the admin Form Fill page has a **Seed from job-board catalog** button
+- Dropdown answers use `a|b|c` candidate lists (per-ATS wording differs);
+  `browser_apply` tries each in order via `select_option`, and as typed text
+  on comboboxes
+
+### Screener-question guard (data-leak protection)
+- Built-in identity patterns (`FIELD_PATTERNS`) are matched with unanchored
+  `re.search` against the whole label, so a long question like "…require
+  sponsorship at your current location?" could substring-match `location`
+  and dump the city value into it.
+- `_is_screener_question()` classifies a field as a free-text question ("?" or
+  >7 words) and skips the identity autofill for it — only the explicit,
+  intentional `custom_fields` rules apply. City/state/country patterns are also
+  word-bounded so "relocation" can't match.
+- This was found and fixed by a live dry-run pass against a real Greenhouse
+  form; see TESTING.md → "Auto-fill against a live form".
 
 ### What it can't handle
 - CAPTCHAs

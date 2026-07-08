@@ -13,13 +13,20 @@ No AI, no cloud services, no API keys required for core functionality. Supports 
 - **6+ free job board scrapers** — Greenhouse, Lever, Himalayas, RemoteOK, USAJobs, Arbeitnow
 - **Extended scrapers** — Workday, The Muse, Wellfound, Adzuna, Google Jobs (SerpAPI)
 - **Internet-wide search** — DuckDuckGo + company career pages (Greenhouse, Lever, Workday)
+- **AI-training gig module** — directory of 15 AI-training platforms (DataAnnotation, Outlier, Alignerr, Mercor…) with per-platform signup tracking, plus scrapers for trainer/annotator/rater postings (`ai_training.py`)
+- **Freelance / part-time boards** — Freelancer.com API + saved part-time searches for Upwork, PeoplePerHour, Guru, Braintrust, with an optional weekly-hours cap (`scraper_freelance.py`)
 - **Keyword + salary matching** — no AI, no LLM calls, deterministic filtering
+- **Result quality filters** — title-relevance, USD-only / minimum-budget, aggregator-page, and cross-source duplicate hygiene, all configurable (`quality_filter.py`)
+- **ATS auto-fill catalog** — auto-fill rules built from the real fields on Greenhouse, Lever, Workday, Ashby, iCIMS, Indeed, and LinkedIn forms, with per-board tags and per-ATS answer variants (`ats_fields.py`)
 - **Stale job cleanup** — auto-removes unapproved jobs older than configurable days
-- **Browser automation** — fills forms, uploads resume, pauses before submit
+- **Browser automation** — fills forms, uploads resume, pauses before submit; never dumps personal data into free-text screener questions
+- **Per-role / per-resume checks** — scrape and match a single role in isolation from the CLI (`--role`) or the admin panel (**▶ Run Check**)
 - **Multi-profile** — each person gets isolated config, data, and resumes
 - **Two storage backends** — local CSV (zero setup) or Google Sheets (cloud access)
 - **Admin panel** — web dashboard for reviewing jobs, managing profiles, running scrapes
 - **Deployed mode** — multi-user admin with expandable per-user sections
+
+> **"No AI" still holds.** The AI-training module is about *finding AI-training gigs* — the tool itself makes no LLM/API calls and needs no AI keys. Matching and filtering are deterministic.
 
 ---
 
@@ -58,7 +65,11 @@ job-hunter/
 |-- scraper.py               # 6 API scrapers
 |-- scraper_extended.py      # 11 extended scrapers
 |-- scraper_web.py           # Internet-wide search (DuckDuckGo + career pages)
-|-- matcher.py               # Keyword + salary matching
+|-- ai_training.py           # AI-training platform directory + gig scrapers
+|-- scraper_freelance.py     # Freelancer.com API + saved part-time searches
+|-- matcher.py               # Keyword + salary matching (+ optional hours cap)
+|-- quality_filter.py        # Relevance / currency / aggregator / dedupe hygiene
+|-- ats_fields.py            # Auto-fill field catalog from real ATS forms
 |-- browser_apply.py         # Playwright form automation
 |-- storage.py               # Routes to local or Google Sheets
 |-- local_sync.py            # CSV backend
@@ -74,7 +85,8 @@ job-hunter/
 +-- output/{profile}/
     |-- jobs.csv              # API scrape results
     |-- browser_jobs.csv      # Browser scrape results
-    |-- form_config.json      # Form auto-fill config
+    |-- form_config.json      # Form auto-fill config (seeded from ats_fields.py)
+    |-- ai_training.json      # Per-platform AI-training signup tracker
     |-- run_log.json          # Scrape/apply history
     |-- data/                 # Intermediate JSON files
     +-- resumes/              # User's resume PDFs
@@ -117,6 +129,17 @@ Drop one PDF per role in `output/yourname/resumes/` with filenames matching the 
 python run_scrape.py --profile yourname          # API + web search + stale cleanup
 python run_scrape.py --profile yourname --no-web  # API only, skip web search
 python run_scrape.py --profile yourname --no-cleanup  # Skip stale job removal
+python run_scrape.py --profile yourname --role cybersecurity   # Check ONE role only
+python run_scrape.py --profile yourname --no-ai --no-freelance # Skip gig sources
+```
+
+Every batch passes through configurable quality filters (title relevance,
+USD-only, minimum freelance budget, aggregator-page removal, cross-source
+dedupe). Retro-clean an existing sheet without re-scraping:
+
+```bash
+python quality_filter.py --profile yourname --clean --dry-run   # preview
+python quality_filter.py --profile yourname --clean             # apply
 ```
 
 ### 5. Review
@@ -144,7 +167,12 @@ python admin/server.py --deployed
 # or: DEPLOYED=1 python admin/server.py
 ```
 
-**Pages:** Dashboard, Jobs, Config, Form Fill, Resumes, History, Setup
+**Pages:** Dashboard, Jobs, AI Training, Config, Form Fill, Resumes, History, Setup
+
+- **AI Training** — platform directory (DataAnnotation, Outlier, Alignerr…) with per-platform signup-status tracking, setup checklist, and the applicant data used at signup.
+- **Config** — profile info, location filter, role profiles, and toggles for web search, stale cleanup, and the result quality filters.
+- **Form Fill** — auto-fill rules seeded from the ATS field catalog (`ats_fields.py`); shows the field label and which boards ask it, with a **Seed from job-board catalog** button.
+- **Resumes** — each resume shows and edits its linked search parameters, with a **▶ Run Check** button to scrape just that role.
 
 **Deployed mode adds:** expandable per-user sections, profile creation, resume upload/delete, global summary stats.
 
@@ -166,6 +194,14 @@ python admin/server.py --deployed
 | Google Jobs | SerpAPI key | ~$100/mo | Google Jobs search results |
 | LinkedIn | Browser | Free | Easy Apply search links |
 | Indeed | Browser | Free | Search links |
+| Ashby | None | Free | AI-training company boards (Mercor, Micro1, OpenAI) |
+| Freelancer.com | None | Free | Freelance/part-time projects (hours-capped) |
+| Upwork / PeoplePerHour / Guru / Braintrust | Manual | Free | Saved part-time search links (bot-blocked; you browse) |
+
+AI-training gig platforms (DataAnnotation, Outlier, Alignerr, Mercor, xAI
+Tutor, and 10 more) are catalogued in `ai_training.py` and tracked on the
+admin panel's **AI Training** page. See **[SOURCES.md](SOURCES.md)** for the
+full source list and per-source setup.
 
 ---
 
@@ -254,6 +290,10 @@ python admin/server.py --deployed
 - Admin panel binds to `127.0.0.1` only — do not expose to the internet without adding auth
 - Profile files are executed as Python code — only load profiles you trust
 - `.env` and profile files are gitignored — never commit API keys or personal info
+- Auto-apply pauses before every submission and never submits on its own
+- Personal data (city, employer, etc.) is never auto-filled into free-text
+  screener questions — identity autofill is skipped for question-like fields
+  so it can't leak into an unrelated answer box
 - See [SECURITY.md](SECURITY.md) for vulnerability reporting
 
 ---

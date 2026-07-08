@@ -51,13 +51,32 @@ FIELD_PATTERNS = {
     r"phone|mobile|tel": "phone",
     r"linkedin": "linkedin",
     r"website|portfolio|url|blog": "website",
-    r"city|location": "city",
-    r"state": "state",
-    r"country": "country",
+    # Word-bounded so "relocation" / "current location?" in a screener
+    # question can't pull the city value into the wrong box.
+    r"\bcity\b|\blocation\b": "city",
+    r"\bstate\b|province": "state",
+    r"\bcountry\b": "country",
     r"current.?(company|employer|org)": "current_company",
     r"current.?(title|role|position)": "current_title",
     r"years?.?(of)?.?experience": "years_experience",
 }
+
+
+def _is_screener_question(identifier: str) -> bool:
+    """
+    True when a field's identifier reads like a free-text screener/EEO
+    question rather than a short labelled identity field ("City", "Email").
+
+    Why this matters: built-in identity patterns are matched with an
+    unanchored re.search against the whole label, so a long question like
+    "Will you require sponsorship for a visa at your current location?"
+    would substring-match `location` and dump the city value into it.
+    Real identity fields have short labels; questions are long and/or end
+    in "?". For those we skip the greedy identity autofill and only apply
+    the explicit, intentional custom rules from form_config.json.
+    """
+    ident = identifier.strip()
+    return "?" in ident or len(ident.split()) > 7
 
 # ── Load custom form config ──────────────────────────────
 
@@ -130,18 +149,22 @@ def fill_form_fields(page: Page):
             continue
 
         filled = False
-        # Try standard fields first
-        for pattern, key in FIELD_PATTERNS.items():
-            if re.search(pattern, identifier):
-                value = AUTOFILL_DATA.get(key, "")
-                if value:
-                    try:
-                        inp.fill(value)
-                        print(f"    ✏️  {key}: {value[:30]}")
-                    except Exception:
-                        pass
-                filled = True
-                break
+        # Built-in identity autofill — skipped for screener/EEO questions
+        # so a long question can't substring-match an identity pattern and
+        # leak personal data (e.g. city into a visa question). Those are
+        # handled only by the explicit custom rules below.
+        if not _is_screener_question(identifier):
+            for pattern, key in FIELD_PATTERNS.items():
+                if re.search(pattern, identifier):
+                    value = AUTOFILL_DATA.get(key, "")
+                    if value:
+                        try:
+                            inp.fill(value)
+                            print(f"    ✏️  {key}: {value[:30]}")
+                        except Exception:
+                            pass
+                    filled = True
+                    break
 
         # Try custom field patterns from form_config.json.
         # "a|b|c" values are dropdown candidates — for a text input the
@@ -156,6 +179,25 @@ def fill_form_fields(page: Page):
                         print(f"    ✏️  custom({pattern}): {value[:30]}")
                     except Exception:
                         pass
+                    filled = True
+                    break
+
+        # EEO / self-ID fields are rendered as comboboxes (<input>) on
+        # Greenhouse, so the <select> pass below never sees them. Best-effort
+        # match them here against the same select rules, trying each
+        # candidate answer as typed text.
+        if not filled:
+            for rule in SELECT_DEFAULTS:
+                pattern = rule.get("pattern", "")
+                raw_value = rule.get("value", "")
+                if pattern and raw_value and re.search(pattern, identifier):
+                    for candidate in [v.strip() for v in raw_value.split("|") if v.strip()]:
+                        try:
+                            inp.fill(candidate)
+                            print(f"    ✏️  eeo({pattern}): {candidate}")
+                            break
+                        except Exception:
+                            continue
                     break
 
     # Handle select/dropdown fields with defaults
