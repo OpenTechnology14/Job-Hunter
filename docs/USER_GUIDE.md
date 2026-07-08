@@ -7,9 +7,15 @@ setup is complete.
 
 ## What This Does
 
-Job Hunter automatically searches 17 job boards for jobs matching your skills,
+Job Hunter automatically searches 18+ job boards for jobs matching your skills,
 salary range, and location. It saves results to spreadsheet files you review
 in Excel or Numbers. You mark the ones you want, and the system applies for you.
+
+It can also find **gig work**: AI-training platforms (DataAnnotation, Outlier,
+Alignerr, and more) and **freelance / part-time** projects (Freelancer.com plus
+saved searches for Upwork, PeoplePerHour, Guru, and Braintrust). Before results
+reach your list, they pass through quality filters that drop foreign-currency
+gigs, tiny-budget projects, "1,000+ jobs" listing pages, and duplicates.
 
 ---
 
@@ -28,8 +34,12 @@ Then open **http://localhost:5175** in your browser.
 ### What you can do:
 - **Dashboard** — see job counts, run scrapes with one click
 - **Jobs** — browse, search, filter, and approve/reject jobs by clicking Y/N
-- **Resumes** — view all your resume PDFs
-- **Form Fill** — configure auto-fill answers for job applications
+- **AI Training** — track your signup progress on each AI-training platform
+- **Config** — turn web search, stale cleanup, and the quality filters on/off
+- **Resumes** — view each resume PDF, edit its search parameters, and click
+  **▶ Run Check** to search just that one role
+- **Form Fill** — configure auto-fill answers; click **Seed from job-board
+  catalog** to pre-fill the common questions from real application forms
 - **Setup** — check that everything is configured correctly
 
 ### Daily workflow with admin panel:
@@ -157,7 +167,15 @@ When you run `run_apply.py`, it:
 ### What you fill manually:
 - Cover letters (unless you add a default)
 - Specific questions about the role
+- Legal questions (e.g. "are you bound by a non-compete?") — left blank on
+  purpose so you answer them yourself
 - Anything the system doesn't recognize
+
+**Your personal info is never dumped into the wrong box.** The system only
+auto-fills identity details (name, city, employer…) into short, clearly
+labelled fields. On long free-text questions it holds back, so your city can't
+end up as the answer to "will you require visa sponsorship?" — a real bug that
+was caught by testing against live application forms and fixed.
 
 ---
 
@@ -191,6 +209,21 @@ You can pre-configure answers. Edit `output/yourname/form_config.json`:
 
 The "pattern" is matched against form labels. When the system sees a form
 field whose label contains that pattern, it fills in the value automatically.
+
+**You don't have to write these from scratch.** New profiles start with a
+catalog of ~35 rules built from the actual fields on Greenhouse, Lever,
+Workday, Ashby, iCIMS, Indeed, and LinkedIn applications. To (re)load it, open
+the **Form Fill** page and click **Seed from job-board catalog**, or run:
+
+```bash
+python ats_fields.py --profile yourname          # add any missing rules
+python ats_fields.py --profile yourname --reset   # rebuild from the catalog
+```
+
+Seeding never overwrites answers you've edited — it only fills in gaps. For
+dropdown questions where different sites word the same answer differently, use
+`|` to list alternatives and the system tries each in order, e.g.
+`"Decline To Self Identify|Prefer not to say|I don't wish to answer"`.
 
 ---
 

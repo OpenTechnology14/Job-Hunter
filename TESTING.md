@@ -140,3 +140,52 @@ No profile required — uses standalone test fixtures. Skips tests gracefully wh
 | 7.1 | Local CSV | Set STORAGE_MODE="local", run scrape | output/{profile}/jobs.csv updated |
 | 7.2 | Google Sheets | Set STORAGE_MODE="google", configure sheet ID, run scrape | Google Sheet updated |
 | 7.3 | Mode switch | Change STORAGE_MODE, run scrape | Writes to new target, old data preserved |
+
+---
+
+## 9. Gig Sources (AI Training & Freelance)
+
+| # | Scenario | Steps | Expected |
+|---|----------|-------|----------|
+| 9.1 | AI-training directory | `python ai_training.py --profile <p>` | Prints 15 platforms; writes `output/{p}/ai_training.json` |
+| 9.2 | AI-training scrape | Profile has `ai-training` role, run scrape | Rows tagged "AI Training / Data Annotation" appear |
+| 9.3 | Skip AI | `run_scrape.py --profile <p> --no-ai` | No AI-training sources hit |
+| 9.4 | Freelance boards | Role with `freelance_boards: True`, run scrape | Freelancer.com rows + 🔎 saved-search rows appear |
+| 9.5 | Hours cap | Role with `max_hours_per_week: 10` | Full-time postings matching the queries are filtered out |
+| 9.6 | Skip freelance | `run_scrape.py --profile <p> --no-freelance` | No freelance sources hit |
+
+---
+
+## 10. Quality Filters
+
+| # | Scenario | Steps | Expected |
+|---|----------|-------|----------|
+| 10.1 | Relevance | Scrape a role; check log | "title unrelated to role keywords" drops off-topic gigs |
+| 10.2 | Currency | Freelance scrape with `filter_usd_only` | ₹/€/£ budget rows dropped |
+| 10.3 | Min budget | `filter_min_budget: 25`, freelance scrape | Freelancer projects under $25 dropped |
+| 10.4 | Aggregators | Web search on | "1,000+ … jobs" listing pages dropped |
+| 10.5 | Cross-source dedupe | Same posting on two boards | Only one row kept (title+company key) |
+| 10.6 | Retro-clean | `python quality_filter.py --profile <p> --clean --dry-run` | Lists removable rows; approved (Y/Done) rows untouched |
+
+---
+
+## 11. Per-Role Checks
+
+| # | Scenario | Steps | Expected |
+|---|----------|-------|----------|
+| 11.1 | CLI single role | `run_scrape.py --profile <p> --role <id>` | Only that role scraped/matched; stale cleanup skipped |
+| 11.2 | Unknown role | `--role bogus` | Errors with the list of valid role ids, exits cleanly |
+| 11.3 | Admin Run Check | Resumes/Config page → **▶ Run Check** | Scrape starts scoped to that role; Jobs page updates |
+
+---
+
+## 12. Auto-fill Field Catalog & Live Form Pass
+
+| # | Scenario | Steps | Expected |
+|---|----------|-------|----------|
+| 12.1 | Seed catalog | `python ats_fields.py --profile <p>` | ~35 rules written to `form_config.json` |
+| 12.2 | Merge (no clobber) | Edit a value, re-run without `--reset` | Edited value preserved; only missing rules added |
+| 12.3 | Reset | `python ats_fields.py --profile <p> --reset` | Config rebuilt from catalog |
+| 12.4 | Candidate answers | EEO dropdown on a real form | One of the `a\|b\|c` candidates selected |
+| 12.5 | Auto-fill against a live form | Headless Playwright load of a real Greenhouse job (e.g. a `job-boards.greenhouse.io/*/jobs/*` URL), run `fill_form_fields` | Identity fields fill; **no personal data lands in free-text screener/EEO questions** (regression check for the screener-question guard) |
+| 12.6 | Screener guard | Field label "…require sponsorship at your current location?" | City value is NOT filled in; only an explicit visa/sponsor rule answers it |

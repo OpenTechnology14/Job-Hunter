@@ -4,6 +4,21 @@ Planned features and improvements. No promises on timelines.
 
 ---
 
+## Recently Shipped
+
+- **Extended sources** — Wellfound, The Muse, Adzuna, Workday, Google Jobs (SerpAPI) are live in `scraper_extended.py`
+- **AI-training gig module** (`ai_training.py`) — 15-platform directory + Ashby/Greenhouse/Lever scrapers
+- **Freelance / part-time boards** (`scraper_freelance.py`) — Freelancer.com API + saved searches, with a weekly-hours cap
+- **Result quality filters** (`quality_filter.py`) — relevance, currency/budget, aggregator, cross-source dedupe, retro-clean CLI
+- **ATS auto-fill catalog** (`ats_fields.py`) — rules built from real Greenhouse/Lever/Workday/Ashby/iCIMS/Indeed/LinkedIn forms
+- **Screener-question guard** — identity autofill can no longer leak personal data into free-text questions
+- **Per-role / per-resume checks** — `--role` flag and admin **▶ Run Check** buttons
+
+The "More Job Board Sources" and some "Resume Customization" items below are
+partially or fully covered by the above; kept for context and further ideas.
+
+---
+
 ## Next Up
 
 ### Authentication for Admin Panel
