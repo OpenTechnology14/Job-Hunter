@@ -10,20 +10,33 @@ No AI, no cloud services, no API keys required for core functionality. Supports 
 
 ## Features
 
-- **6+ free job board scrapers** — Greenhouse, Lever, Himalayas, RemoteOK, USAJobs, Arbeitnow
-- **Extended scrapers** — Workday, The Muse, Wellfound, Adzuna, Google Jobs (SerpAPI)
-- **Internet-wide search** — DuckDuckGo + company career pages (Greenhouse, Lever, Workday)
+Grouped by what they do in the pipeline. Everything is deterministic — no
+LLM calls, no AI API keys required.
+
+### Search & Discovery
+- **11 free job-board scrapers** — Greenhouse, Lever, Himalayas, RemoteOK, USAJobs, Arbeitnow, plus Workday, The Muse, Wellfound, Adzuna, Google Jobs (SerpAPI)
+- **Internet-wide web search** — DuckDuckGo (free) or Google/SerpAPI + company career-page discovery (`scraper_web.py`)
+- **Boolean & Google X-Ray search** — builds `("A" OR "B") AND (x OR y) NOT z` strings per role and X-Rays the big ATS domains (`site:boards.greenhouse.io …`) to reach companies *not* in your slug lists. Emits clickable LinkedIn / Indeed / Google-X-Ray rows and best-effort fetches real postings into the pipeline (`boolean_query.py`)
 - **AI-training gig module** — directory of 15 AI-training platforms (DataAnnotation, Outlier, Alignerr, Mercor…) with per-platform signup tracking, plus scrapers for trainer/annotator/rater postings (`ai_training.py`)
 - **Freelance / part-time boards** — Freelancer.com API + saved part-time searches for Upwork, PeoplePerHour, Guru, Braintrust, with an optional weekly-hours cap (`scraper_freelance.py`)
+- **LinkedIn + Indeed browser scrape** — separate informational CSV with Easy-Apply detection (`run_scrape_browsers.py`)
+
+### Matching & Result Quality
 - **Keyword + salary matching** — no AI, no LLM calls, deterministic filtering
-- **Result quality filters** — title-relevance, USD-only / minimum-budget, aggregator-page, and cross-source duplicate hygiene, all configurable (`quality_filter.py`)
-- **ATS auto-fill catalog** — auto-fill rules built from the real fields on Greenhouse, Lever, Workday, Ashby, iCIMS, Indeed, and LinkedIn forms, with per-board tags and per-ATS answer variants (`ats_fields.py`)
+- **Part-time hours gate** — roles with a weekly-hours cap only surface part-time/contract postings
+- **Result quality filters** — title-relevance, USD-only / minimum-budget, aggregator-page, and cross-source duplicate hygiene, all configurable; retro-clean an existing sheet in one command (`quality_filter.py`)
 - **Stale job cleanup** — auto-removes unapproved jobs older than configurable days
-- **Browser automation** — fills forms, uploads resume, pauses before submit; never dumps personal data into free-text screener questions
-- **Per-role / per-resume checks** — scrape and match a single role in isolation from the CLI (`--role`) or the admin panel (**▶ Run Check**)
+
+### Applying
+- **Supervised browser auto-apply** — fills forms, uploads the right resume per role, **pauses before every submit**; `--dry-run` mode (`browser_apply.py`)
+- **ATS auto-fill catalog** — auto-fill rules built from the real fields on Greenhouse, Lever, Workday, Ashby, iCIMS, Indeed, and LinkedIn forms, with per-board tags and per-ATS answer variants (`ats_fields.py`)
+- **Screener-question data-leak guard** — personal data (city, employer…) never auto-fills into free-text or EEO questions; those are left for you to review before submit
+
+### Profiles, Admin & Ops
 - **Multi-profile** — each person gets isolated config, data, and resumes
+- **Per-role / per-resume checks** — scrape and match a single role in isolation from the CLI (`--role`) or the admin panel (**▶ Run Check**)
 - **Two storage backends** — local CSV (zero setup) or Google Sheets (cloud access)
-- **Admin panel** — web dashboard for reviewing jobs, managing profiles, running scrapes
+- **Admin panel** — web dashboard for reviewing jobs, managing profiles, editing search strings & form-fill, running scrapes
 - **Deployed mode** — multi-user admin with expandable per-user sections
 
 > **"No AI" still holds.** The AI-training module is about *finding AI-training gigs* — the tool itself makes no LLM/API calls and needs no AI keys. Matching and filtering are deterministic.
@@ -36,21 +49,25 @@ No AI, no cloud services, no API keys required for core functionality. Supports 
 Profile (.py)
     |
     v
-Scraper (scraper.py / scraper_extended.py / scraper_web.py)
-    | hits job board APIs + internet search
+Sources (scraper.py / scraper_extended.py / scraper_web.py /
+         boolean_query.py / ai_training.py / scraper_freelance.py)
+    | job-board APIs + web/X-Ray search + gig & freelance boards
     v
 Matcher (matcher.py)
-    | filters by keyword + salary range
+    | keyword + salary range + optional part-time hours gate
+    v
+Quality Filter (quality_filter.py)
+    | relevance, USD/budget, aggregator pages, cross-source dedupe
     v
 Storage (local_sync.py or sheets_sync.py)
-    | writes to CSV or Google Sheet
+    | writes to CSV or Google Sheet (also URL + title+company dedupe)
     v
-User reviews spreadsheet, marks jobs Y/N
+User reviews spreadsheet / admin panel, marks jobs Y/N
     |
     v
-Auto-Apply (browser_apply.py)
-    | opens browser, fills forms, uploads resume
-    | pauses before every submission
+Auto-Apply (browser_apply.py + ats_fields.py catalog)
+    | fills forms (no personal data in screener questions),
+    | uploads the right resume, pauses before every submission
     v
 Job marked "Done" in spreadsheet
 ```
@@ -65,6 +82,7 @@ job-hunter/
 |-- scraper.py               # 6 API scrapers
 |-- scraper_extended.py      # 11 extended scrapers
 |-- scraper_web.py           # Internet-wide search (DuckDuckGo + career pages)
+|-- boolean_query.py         # Boolean string builder + Google X-Ray over ATS boards
 |-- ai_training.py           # AI-training platform directory + gig scrapers
 |-- scraper_freelance.py     # Freelancer.com API + saved part-time searches
 |-- matcher.py               # Keyword + salary matching (+ optional hours cap)
@@ -131,7 +149,16 @@ python run_scrape.py --profile yourname --no-web  # API only, skip web search
 python run_scrape.py --profile yourname --no-cleanup  # Skip stale job removal
 python run_scrape.py --profile yourname --role cybersecurity   # Check ONE role only
 python run_scrape.py --profile yourname --no-ai --no-freelance # Skip gig sources
+python run_scrape.py --profile yourname --xray    # Force Boolean/X-Ray search on
+python run_scrape.py --profile yourname --no-xray # Skip Boolean/X-Ray search
 ```
+
+Boolean/X-Ray search is opt-in via `"boolean_search": True` in a profile's
+`SEARCH_SETTINGS`. It adds clickable LinkedIn/Indeed/Google-X-Ray rows per role
+and best-effort fetches ATS postings the slug lists miss (reliable with a
+`SERPAPI_KEY`; opportunistic on free DuckDuckGo). The generated strings are also
+shown per role on the admin **Config** page with copy buttons. Optional per-role
+`must_have` / `nice_to_have` term lists refine the Boolean output.
 
 Every batch passes through configurable quality filters (title relevance,
 USD-only, minimum freelance budget, aggregator-page removal, cross-source
@@ -194,6 +221,8 @@ python admin/server.py --deployed
 | Google Jobs | SerpAPI key | ~$100/mo | Google Jobs search results |
 | LinkedIn | Browser | Free | Easy Apply search links |
 | Indeed | Browser | Free | Search links |
+| Google X-Ray | None (or SerpAPI) | Free | `site:` search over Greenhouse/Lever/Ashby — finds companies not in your slug lists |
+| LinkedIn / Indeed (Boolean) | Manual | Free | Saved Boolean-query search links per role |
 | Ashby | None | Free | AI-training company boards (Mercor, Micro1, OpenAI) |
 | Freelancer.com | None | Free | Freelance/part-time projects (hours-capped) |
 | Upwork / PeoplePerHour / Guru / Braintrust | Manual | Free | Saved part-time search links (bot-blocked; you browse) |

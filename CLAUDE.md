@@ -42,6 +42,7 @@ job-hunter/
 ├── scraper_web.py           ← Internet-wide search (DuckDuckGo + career pages)
 ├── ai_training.py           ← AI-training module: platform directory + scrapers (sources 18-20)
 ├── scraper_freelance.py     ← Freelance boards: Freelancer.com API + saved part-time searches (source 21)
+├── boolean_query.py         ← Boolean string builder + Google X-Ray over ATS boards (opt-in)
 ├── matcher.py               ← Keyword + salary matching (no AI)
 ├── quality_filter.py        ← Result hygiene: relevance, USD/budget, aggregator pages, dedupe
 ├── ats_fields.py            ← Auto-fill field catalog from real ATS forms (Greenhouse/Lever/Workday/...)
@@ -225,6 +226,11 @@ Roles with `"freelance_boards": True` also hit freelance boards
 (Freelancer.com API + saved part-time searches — see `scraper_freelance.py`);
 their `"max_hours_per_week"` cap filters regular boards to postings with
 part-time/contract signals.
+With `"boolean_search": True`, also adds clickable LinkedIn/Indeed/Google-X-Ray
+Boolean rows per role and best-effort fetches ATS postings the slug lists miss
+(see `boolean_query.py`).
+After matching, every batch passes through the quality filters
+(relevance/USD/budget/aggregator/dedupe — see `quality_filter.py`).
 Automatically cleans up stale unapproved jobs older than 30 days.
 Results go to `output/{profile}/jobs.csv`.
 
@@ -232,6 +238,7 @@ Results go to `output/{profile}/jobs.csv`.
 - `--web` — Force web search even if `web_search: False` in profile
 - `--no-ai` — Skip AI-training sources for this run
 - `--no-freelance` — Skip freelance boards for this run
+- `--xray` / `--no-xray` — Force Boolean/X-Ray search on / off for this run
 - `--role <id>` — Individual check: scrape/match ONE role only (repeatable).
   Skips stale cleanup and drops unmatched pass-through rows. Also available
   per-resume in the admin panel (▶ Run Check on Resumes/Config pages).

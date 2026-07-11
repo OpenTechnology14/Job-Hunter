@@ -56,6 +56,21 @@ Each scraper function takes search queries + location and returns a list of job 
   one saved-search row per bot-blocked board (Upwork, PeoplePerHour, Guru, Braintrust)
 - A loose relevance filter drops off-topic API hits (Freelancer's query match is broad)
 
+### Boolean / X-Ray search (`boolean_query.py`)
+- Runs for `"boolean_search": True` in SEARCH_SETTINGS (force `--xray`, skip `--no-xray`)
+- `build_boolean(role_terms(...))` composes `("A" OR "B") AND (x OR y) NOT z` from
+  `search_queries` (title OR-group) + optional `must_have` / `nice_to_have` + `exclude_keywords`
+- `saved_search_rows()` → clickable LinkedIn/Indeed/Google-X-Ray rows (always; reliable)
+- `run_xray_search()` → runs `site:boards.greenhouse.io ("A" OR "B")` etc. through
+  `scraper_web`'s DuckDuckGo/SerpAPI engine and returns real ATS postings tagged with `role_hint`
+- X-Ray queries are capped to `XRAY_MAX_TITLES` and drop exclusions — long whole-web
+  queries return nothing; the matcher applies `exclude_keywords` downstream instead
+- Free DuckDuckGo rate-limits (202 "challenge"); one retry, then a graceful 0 with a
+  note that the clickable rows still work and `SERPAPI_KEY` makes the fetch reliable
+- `search_strings()` is the no-network view the admin **Config** page renders per role
+- **Add an ATS domain:** extend `XRAY_SITES` (must return individual postings via `site:`;
+  Workday is intentionally excluded — its X-Ray hits are landing pages, not postings)
+
 ---
 
 ## 2. Matcher (`matcher.py`)

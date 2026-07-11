@@ -189,3 +189,16 @@ No profile required — uses standalone test fixtures. Skips tests gracefully wh
 | 12.4 | Candidate answers | EEO dropdown on a real form | One of the `a\|b\|c` candidates selected |
 | 12.5 | Auto-fill against a live form | Headless Playwright load of a real Greenhouse job (e.g. a `job-boards.greenhouse.io/*/jobs/*` URL), run `fill_form_fields` | Identity fields fill; **no personal data lands in free-text screener/EEO questions** (regression check for the screener-question guard) |
 | 12.6 | Screener guard | Field label "…require sponsorship at your current location?" | City value is NOT filled in; only an explicit visa/sponsor rule answers it |
+
+---
+
+## 13. Boolean / X-Ray Search
+
+| # | Scenario | Steps | Expected |
+|---|----------|-------|----------|
+| 13.1 | Print strings | `python boolean_query.py --profile <p>` | Per role: LinkedIn/ATS Boolean string + one Google X-Ray string per ATS site |
+| 13.2 | Boolean composition | Role with `must_have` / `nice_to_have` set | `("titles") AND must AND (nice) NOT exclude` — quoting on multi-word terms |
+| 13.3 | Saved-search rows | Run with `boolean_search: True` (or `--xray`) | `jobs.csv` gets 🔎 LinkedIn/Indeed/Google-X-Ray rows, force-matched to the role, kept by the quality filter |
+| 13.4 | X-Ray fetch | `python boolean_query.py --profile <p> --fetch` | Real Greenhouse/Lever/Ashby postings when DuckDuckGo cooperates; graceful `0 postings … (throttling)` note otherwise |
+| 13.5 | Admin display | Config page → a role card → "🧭 Boolean / X-Ray search strings" | Expands to the Boolean string (Copy button) + LinkedIn/Indeed/X-Ray links |
+| 13.6 | Skip flag | `run_scrape.py --profile <p> --no-xray` | Step 1e skipped even when `boolean_search: True` |

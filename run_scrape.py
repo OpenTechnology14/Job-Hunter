@@ -32,6 +32,10 @@ def run():
                         help="Skip AI-training sources even if the profile has an ai-training role")
     parser.add_argument("--no-freelance", action="store_true",
                         help="Skip freelance boards even if a role enables freelance_boards")
+    parser.add_argument("--xray", action="store_true",
+                        help="Force Boolean/X-Ray search on (overrides profile setting)")
+    parser.add_argument("--no-xray", action="store_true",
+                        help="Skip Boolean/X-Ray search even if boolean_search is on")
     parser.add_argument("--role", action="append",
                         help="Run the check for a single role id only (repeatable, "
                              "e.g. --role it-automation-contractor). Scopes scraping, "
@@ -136,6 +140,31 @@ def run():
             print(f"\n  ⚠️  Freelance boards skipped: {e}")
         except Exception as e:
             print(f"\n  ⚠️  Freelance boards error: {e}")
+
+    # ── Step 1e: Boolean / X-Ray search (optional) ───────
+    # Adds clickable LinkedIn/Google-X-Ray/Indeed Boolean rows per role and
+    # best-effort fetches ATS postings via X-Ray (companies not in the slug
+    # lists). Enabled by boolean_search in SEARCH_SETTINGS or --xray.
+    if args.no_xray:
+        xray_enabled = False
+    else:
+        xray_enabled = args.xray or SEARCH_SETTINGS.get("boolean_search", False)
+    if xray_enabled:
+        try:
+            from boolean_query import scrape_boolean_sources
+            locations = SEARCH_SETTINGS.get("locations", ["Remote"])
+            location = locations[0] if locations else "Remote"
+            bq_jobs = scrape_boolean_sources(
+                ROLE_PROFILES, location, do_fetch=True,
+                max_results=SEARCH_SETTINGS.get("max_results_per_query", 25),
+                default_exclude=SEARCH_SETTINGS.get("exclude_keywords", []),
+            )
+            raw_jobs.extend(bq_jobs)
+            print(f"\n  🧭 Boolean/X-Ray search added {len(bq_jobs)} rows to the pipeline")
+        except ImportError as e:
+            print(f"\n  ⚠️  Boolean/X-Ray search skipped: {e}")
+        except Exception as e:
+            print(f"\n  ⚠️  Boolean/X-Ray search error: {e}")
 
     # ── Step 2: Match (keyword + salary, no AI) ──────────
     from dataclasses import asdict
