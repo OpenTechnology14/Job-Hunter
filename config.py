@@ -59,6 +59,10 @@ _DEFAULT_SEARCH_SETTINGS = {
     "filter_usd_only": True,          # drop non-USD budgets (foreign-client gigs)
     "filter_min_budget": 25,          # USD floor for freelance projects (0 = off)
     "filter_aggregators": True,       # drop "1,000+ jobs" search-listing pages
+    # Boolean / X-Ray search (see boolean_query.py). When on: adds clickable
+    # LinkedIn/Google-X-Ray/Indeed Boolean rows per role, and best-effort
+    # fetches ATS postings via X-Ray (reliable with SERPAPI_KEY).
+    "boolean_search": False,
 }
 SEARCH_SETTINGS = {**_DEFAULT_SEARCH_SETTINGS, **_profile.SEARCH_SETTINGS}
 INTERESTING_ROLE = getattr(_profile, "INTERESTING_ROLE", {

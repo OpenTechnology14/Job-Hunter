@@ -1312,7 +1312,11 @@ async function loadConfig() {
     const data = await api(`/api/profiles/${profile}`);
     if (data.error) continue;
 
-    const content = renderConfigBody(data);
+    let strings = {};
+    try { strings = (await api(`/api/profiles/${profile}/search-strings`)).roles || {}; }
+    catch (e) { strings = {}; }
+
+    const content = renderConfigBody(data, strings);
 
     if (deployedMode) {
       const displayName = data.user_profile?.name || profile;
@@ -1325,7 +1329,36 @@ async function loadConfig() {
   document.getElementById('config-content').innerHTML = html;
 }
 
-function renderConfigBody(data) {
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    if (btn) { const o = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = o, 1200); }
+  }).catch(() => toast('Copy failed', true));
+}
+
+function renderSearchStrings(s) {
+  if (!s || !s.boolean) return '';
+  const xrayLinks = (s.xray || []).map(x =>
+    `<a href="${esc(x.url)}" target="_blank" onclick="event.stopPropagation()">X-Ray → ${esc(x.site)}</a>`
+  ).join(' &nbsp;·&nbsp; ');
+  return `
+    <details class="search-strings" style="margin-top:6px;">
+      <summary style="cursor:pointer;font-size:11px;color:var(--accent);">&#129517; Boolean / X-Ray search strings</summary>
+      <div style="margin-top:6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px;">
+        <div style="display:flex;gap:6px;align-items:flex-start;">
+          <code style="flex:1;font-size:11px;color:var(--text);word-break:break-word;white-space:pre-wrap;">${esc(s.boolean)}</code>
+          <button class="btn sm secondary" onclick="event.stopPropagation();copyText(${JSON.stringify(s.boolean).replace(/"/g,'&quot;')}, this)">Copy</button>
+        </div>
+        <div style="margin-top:6px;font-size:11px;display:flex;flex-wrap:wrap;gap:2px 10px;">
+          <a href="${esc(s.linkedin_url)}" target="_blank" onclick="event.stopPropagation()">LinkedIn (Boolean)</a>
+          <a href="${esc(s.indeed_url)}" target="_blank" onclick="event.stopPropagation()">Indeed (Boolean)</a>
+          ${xrayLinks}
+        </div>
+      </div>
+    </details>`;
+}
+
+function renderConfigBody(data, strings) {
+  strings = strings || {};
   const up = data.user_profile || {};
   const loc = data.location_filter || {};
   const ss = data.search_settings || {};
@@ -1382,6 +1415,7 @@ function renderConfigBody(data) {
             ${r.salary_min ? ` &nbsp;&#183;&nbsp; $${r.salary_min.toLocaleString()} &ndash; $${(r.salary_max || 0).toLocaleString()}` : ''}
           </div>
           <div class="role-queries">&#128269; ${esc((r.search_queries || []).join(', ')) || 'No queries'}</div>
+          ${renderSearchStrings(strings[rid])}
         </div>
         <div class="role-actions">
           <button class="btn sm" onclick="runRoleCheck('${profile}','${esc(rid)}')">&#9654; Check</button>

@@ -776,6 +776,28 @@ def delete_profile(name):
     return jsonify({"ok": True, "name": name, "note": "Output data preserved"})
 
 
+# ── Boolean / X-Ray search strings ───────────────────
+
+@app.route("/api/profiles/<name>/search-strings")
+def get_search_strings(name):
+    """Per-role Boolean + Google X-Ray + platform search strings (no network)."""
+    profile_data = _load_profile_module(name)
+    if not profile_data:
+        return jsonify({"error": "Profile not found"}), 404
+
+    from boolean_query import search_strings
+    roles = profile_data.get("role_profiles", {}) or {}
+    ss = profile_data.get("search_settings", {}) or {}
+    default_exclude = ss.get("exclude_keywords", [])
+    locations = ss.get("locations", ["Remote"])
+    location = locations[0] if locations else "Remote"
+
+    out = {}
+    for rid, role in roles.items():
+        out[rid] = search_strings(role, location, default_exclude)
+    return jsonify({"roles": out, "boolean_search": ss.get("boolean_search", False)})
+
+
 # ── Role management ──────────────────────────────────
 
 @app.route("/api/profiles/<name>/roles")

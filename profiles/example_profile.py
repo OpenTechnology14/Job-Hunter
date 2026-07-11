@@ -98,6 +98,20 @@ SEARCH_SETTINGS = {
     # Searches Google/DuckDuckGo for job postings + checks extra company career pages.
     # Enable here or use --web flag on run_scrape.py
     "web_search": True,
+
+    # ── Boolean / Google X-Ray search (boolean_query.py) ──
+    # Adds clickable LinkedIn/Indeed/Google-X-Ray Boolean rows per role and
+    # best-effort fetches ATS postings your slug lists miss (reliable with a
+    # SERPAPI_KEY; opportunistic on free DuckDuckGo). Force with --xray.
+    # Per role you can add optional "must_have" / "nice_to_have" term lists
+    # to refine the generated Boolean string.
+    "boolean_search": False,
+
+    # ── Result quality filters (quality_filter.py) — all default True ──
+    # "filter_title_relevance": True,  # title must contain a role keyword
+    # "filter_usd_only": True,         # drop non-USD budgets
+    # "filter_min_budget": 25,         # USD floor for freelance projects (0=off)
+    # "filter_aggregators": True,      # drop "1,000+ jobs" search-listing pages
 }
 
 # Location filter — controls which jobs make it into the CSV.

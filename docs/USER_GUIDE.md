@@ -140,6 +140,20 @@ Click the Job URL, apply on the website yourself.
 
 ---
 
+## Search-Link Rows (🔎)
+
+Some rows in `jobs.csv` start with a 🔎 and a name like "LinkedIn (Boolean)"
+or "Google X-Ray → Greenhouse". These aren't individual jobs — they're
+**ready-made searches**. Click the row's link to open a pre-built search
+(LinkedIn, Indeed, or a Google "X-Ray" that digs through company career sites)
+and browse what's there. They're a shortcut to the good searches, not
+something to auto-apply to.
+
+You can also see and copy these search strings per role on the admin panel's
+**Config** page. Turn them on with `"boolean_search": True` in your profile.
+
+---
+
 ## How Auto-Apply Works
 
 When you run `run_apply.py`, it:

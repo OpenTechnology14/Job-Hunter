@@ -182,6 +182,51 @@ python scraper_freelance.py --profile alex
 
 ---
 
+## Boolean & Google X-Ray Search (`boolean_query.py`)
+
+Inspired by Boolean-string builder tools, but instead of stopping at a string
+to copy-paste, it also *runs* the X-Ray queries and feeds real postings into
+the pipeline. Two mechanisms:
+
+**1. Saved-search rows (always).** Per role, builds a Boolean string from the
+role's terms and writes clickable rows to `jobs.csv`:
+- LinkedIn (Boolean keywords, past week) and Indeed (Boolean)
+- Google X-Ray, one row per ATS domain: `site:boards.greenhouse.io ("A" OR "B")`,
+  `site:jobs.lever.co …`, `site:jobs.ashbyhq.com …`
+
+  These are reliable (Google itself isn't throttled) and the highest-value part
+  for a job seeker: X-Ray finds postings at companies **not** in the hardcoded
+  Greenhouse/Lever slug lists. Click the row, browse Google's results.
+
+**2. X-Ray fetch (best-effort).** The same `site:` queries are run through the
+web-search engine (`scraper_web.py`) and any real ATS job URLs returned are
+added to `jobs.csv` tagged with `role_hint`, so they're deduped and
+relevance-filtered like everything else. Reliable with a `SERPAPI_KEY`;
+opportunistic on free DuckDuckGo (which rate-limits — falls back to 0 with a
+note, and the clickable rows above still work).
+
+**Boolean string composition** (from the role profile):
+- `search_queries` → the job-title OR-group (always)
+- `must_have` (optional) → each term ANDed in
+- `nice_to_have` (optional) → an OR-group ANDed in
+- `exclude_keywords` → `NOT` terms (LinkedIn/ATS) or `-"term"` (Google)
+
+The X-Ray query is kept short (title OR-group only, capped) because long
+whole-web queries return nothing; `exclude_keywords` are applied later by the
+matcher instead.
+
+**Activation:** `"boolean_search": True` in `SEARCH_SETTINGS`, or the `--xray`
+flag; skip a run with `--no-xray`. The generated strings are shown per role on
+the admin **Config** page with copy buttons.
+
+**Test standalone:**
+```bash
+python boolean_query.py --profile alex           # print the strings per role
+python boolean_query.py --profile alex --fetch    # also run the live X-Ray fetch
+```
+
+---
+
 ## Adding Custom Companies
 
 ### Greenhouse
