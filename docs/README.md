@@ -36,5 +36,6 @@ Job-Hunter is a local-first, supervised job-search tool. This index separates us
 - [Proposal template](proposals/TEMPLATE_PROPOSAL.md)
 - [OpenTech integration and readiness proposal](proposals/PROPOSAL_OPENTECH_INTEGRATION_READINESS.md)
 - [Release and safety gap-closure proposal](proposals/PROPOSAL_RELEASE_AND_SAFETY_GAP_CLOSURE.md)
+- [Standalone workflow and OpenTech template testing](proposals/PROPOSAL_STANDALONE_WORKFLOW_AND_TEMPLATE_TESTING.md) — living doc, starting scaffold
 
 Status terms: **Verified** is directly observed or executed; **Inferred** follows from code but was not executed; **Proposed** does not exist; **Blocked** names unavailable verification.
