@@ -30,6 +30,13 @@ Job-Hunter is a local-first, supervised job-search tool. This index separates us
 | [Open-source checklist](OPEN_SOURCE_RELEASE_CHECKLIST.md) | Public-release gates |
 | [Suggested document updates](SUGGESTED_EXISTING_DOC_UPDATES.md) | Exact corrections to existing docs |
 
+## Design and agent guidance
+
+| Document | Purpose |
+|---|---|
+| [Build prompting digest](design/BUILD-PROMPTING-DIGEST.md) | How to prompt an agent to extend or rebuild Job-Hunter |
+| [Agent skills](../AGENTS.md#skills) | `code-creation`, `docs`, `design`, `audits` under `.claude/skills/` |
+
 ## Proposals
 
 - [Proposal creation SOP](PROPOSAL_CREATION_SOP.md)
