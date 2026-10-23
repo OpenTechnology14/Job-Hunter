@@ -35,6 +35,8 @@ Job-Hunter is a local-first, supervised job-search tool. This index separates us
 | Document | Purpose |
 |---|---|
 | [Build prompting digest](design/BUILD-PROMPTING-DIGEST.md) | How to prompt an agent to extend or rebuild Job-Hunter |
+| [Design-system pointer](design/DESIGN-SYSTEM-POINTER.md) | Hub pointer: what applies, local values/overrides, voice register |
+| [Design proposal template](design/proposals/TEMPLATE.md) | Template for mockups, data flows, interaction notes |
 | [Agent skills](../AGENTS.md#skills) | `code-creation`, `docs`, `design`, `audits` under `.claude/skills/` |
 
 ## Proposals

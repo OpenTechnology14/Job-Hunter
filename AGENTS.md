@@ -41,7 +41,7 @@ Edit the SKILL.md itself; never fork per-tool copies. If a skill conflicts with 
 
 ## Design
 
-Design docs live in `docs/design/`. Start with [`docs/design/BUILD-PROMPTING-DIGEST.md`](docs/design/BUILD-PROMPTING-DIGEST.md) — how to brief an agent to extend or rebuild Job-Hunter. Locked decisions are summarized in the `design` skill.
+Design docs live in `docs/design/`. Start with [`docs/design/BUILD-PROMPTING-DIGEST.md`](docs/design/BUILD-PROMPTING-DIGEST.md) — how to brief an agent to extend or rebuild Job-Hunter. Locked decisions are summarized in the `design` skill. [`docs/design/DESIGN-SYSTEM-POINTER.md`](docs/design/DESIGN-SYSTEM-POINTER.md) points to the ecosystem design-system hub and records Job Hunter's local values, overrides and register (OpenTechnology family; registers, not names). Design artifacts start from [`docs/design/proposals/TEMPLATE.md`](docs/design/proposals/TEMPLATE.md).
 
 ## Coding and test rules
 
