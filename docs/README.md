@@ -44,5 +44,6 @@ Job-Hunter is a local-first, supervised job-search tool. This index separates us
 - [OpenTech integration and readiness proposal](proposals/PROPOSAL_OPENTECH_INTEGRATION_READINESS.md)
 - [Release and safety gap-closure proposal](proposals/PROPOSAL_RELEASE_AND_SAFETY_GAP_CLOSURE.md)
 - [Standalone workflow and OpenTech template testing](proposals/PROPOSAL_STANDALONE_WORKFLOW_AND_TEMPLATE_TESTING.md) — living doc, starting scaffold
+- [Redesign from the OpenTechnologyApp pattern](proposals/REDESIGN_FROM_OPENTECHAPP_PATTERN.md) — **Proposed**; design-parity audit (29 patterns: 7 Match / 10 Partial / 10 Missing / 2 N/A) and gated redesign plan
 
 Status terms: **Verified** is directly observed or executed; **Inferred** follows from code but was not executed; **Proposed** does not exist; **Blocked** names unavailable verification.
