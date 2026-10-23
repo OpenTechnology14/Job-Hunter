@@ -234,6 +234,8 @@ Profile files are executed as Python code. Never load untrusted profile files. I
 
 ### API endpoints
 
+Partial list (20 of 33). The canonical inventory is [`docs/API_ROUTE_AUDIT_LEDGER.md`](docs/API_ROUTE_AUDIT_LEDGER.md); update it whenever a route changes.
+
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/mode` | Returns `{deployed: bool}` |
@@ -260,6 +262,8 @@ Profile files are executed as Python code. Never load untrusted profile files. I
 ---
 
 ## 7. Resume System (`resume_picker.py`, `generate_resumes.py`)
+
+> `generate_resumes.py` is **not in the public repo**. The generator notes below describe the private original. `fpdf2` remains in `requirements.txt`, and nothing tracked imports it (JH-015).
 
 ### Resume picker
 Maps job's matched role category to the corresponding `resume_file` from `ROLE_PROFILES`. Returns the full path to the PDF in `output/{profile}/resumes/`.

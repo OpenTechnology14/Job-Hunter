@@ -35,8 +35,7 @@ job-hunter/
 ├── sheets_sync.py           ← Google Sheets backend (optional)
 ├── profiles/
 │   ├── example_profile.py   ← Template — copy for each person
-│   ├── Example.py              ← Example's profile
-│   └── Candidate.py          ← Candidate's profile
+│   └── yourname.py          ← One per person (gitignored; copy the example)
 ├── scraper.py               ← API scrapers (sources 1-6)
 ├── scraper_extended.py      ← Extended scrapers (sources 7-17)
 ├── scraper_web.py           ← Internet-wide search (DuckDuckGo + career pages)
@@ -52,7 +51,6 @@ job-hunter/
 ├── run_scrape_browsers.py   ← Phase 1B: LinkedIn+Indeed → browser_jobs.csv
 ├── run_tests.py             ← Automated test runner (API, matcher, storage, browser)
 ├── run_apply.py             ← Phase 2: auto-apply (jobs.csv only)
-├── generate_resumes.py      ← PDF resume generator (fpdf2)
 ├── form_config_example.json ← Template for form auto-fill config
 ├── apps_script.js           ← Google Apps Script for sheet menu buttons
 ├── admin/                   ← Admin Panel UI (localhost)

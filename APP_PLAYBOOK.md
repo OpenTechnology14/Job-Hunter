@@ -8,7 +8,7 @@ Single-source reference for the entire codebase. Read the relevant section befor
 
 Job Hunter is a local-first job hunting automation tool. It scrapes free job board APIs, filters results by keyword and salary, stores them in a spreadsheet, and optionally auto-applies via browser automation. No AI, no cloud services required for core functionality.
 
-**Stack:** Python 3.8+, requests, Playwright, Flask, fpdf2
+**Stack:** Python 3.10+ (matches `SETUP_CHECKLIST.md`/`CLAUDE.md`), requests, Playwright, Flask, fpdf2
 **Data store:** filesystem (CSV, JSON, Python profile files)
 **Deployment:** local machine or server with `--deployed` flag
 
@@ -25,7 +25,6 @@ Job Hunter is a local-first job hunting automation tool. It scrapes free job boa
 | `python run_scrape_browsers.py --profile name` | `run_scrape_browsers.py` | LinkedIn/Indeed scraping (Phase 1B) |
 | `python run_apply.py --profile name [--dry-run]` | `run_apply.py` | Browser auto-apply (Phase 2) |
 | `python admin/server.py [--deployed]` | `admin/server.py` | Web admin panel |
-| `python generate_resumes.py --profile name` | `generate_resumes.py` | PDF resume generation |
 | `python resume_picker.py --profile name` | `resume_picker.py` | Verify resume mapping |
 
 ---
@@ -113,7 +112,10 @@ Form detection patterns: file inputs, text inputs with known labels, select drop
 ### resume_picker.py — Resume Selection
 Maps job's matched role category to `resume_file` from `ROLE_PROFILES`. Returns full path to PDF in `output/{profile}/resumes/`.
 
-### generate_resumes.py — PDF Generator
+### generate_resumes.py — PDF Generator (not in the public repo)
+
+> Not shipped on public `main`. Supply your own PDFs in `output/{profile}/resumes/`. The admin `POST /api/ai-training/<profile>/generate-resume` route still calls it and fails on a clean clone (JH-015).
+
 Uses `fpdf2` with Helvetica font. Produces 2-page resumes: header, summary, experience, skills, education.
 
 ---
@@ -173,6 +175,8 @@ Every scraper returns dicts with these keys:
 
 ### API Endpoints
 
+Partial list. The canonical, complete inventory (33 routes) is [`docs/API_ROUTE_AUDIT_LEDGER.md`](docs/API_ROUTE_AUDIT_LEDGER.md).
+
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/mode` | Returns `{deployed: bool}` |
@@ -198,11 +202,12 @@ Every scraper returns dicts with these keys:
 ### Dashboard Pages
 1. **Dashboard** — job counts, category breakdown, scrape buttons
 2. **Jobs** — table with approve/reject, search, filters
-3. **Config** — profile info, location, roles
-4. **Form Fill** — form_config.json editor
-5. **Resumes** — PDF cards with view/upload/delete
-6. **History** — scrape/apply run log
-7. **Setup** — system health check
+3. **AI Training** — platform directory and per-platform signup tracking
+4. **Config** — profile info, location, roles
+5. **Form Fill** — form_config.json editor
+6. **Resumes** — PDF cards with view/upload/delete
+7. **History** — scrape/apply run log
+8. **Setup** — system health check
 
 ---
 

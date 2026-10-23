@@ -39,6 +39,12 @@ LLM calls, no AI API keys required.
 - **Admin panel** — web dashboard for reviewing jobs, managing profiles, editing search strings & form-fill, running scrapes
 - **Deployed mode** — multi-user admin with expandable per-user sections
 
+> **Release profile.** Supported as a **local, single-user, supervised** tool. The
+> `--deployed` multi-user mode is experimental. It has no in-app authentication, CSRF
+> protection or tenant isolation, and is not hosted-ready (see
+> [`docs/AUDIT.md`](docs/AUDIT.md); its disposition is open decision JH-D01). Profile `.py`
+> files are executed as trusted local code.
+
 > **"No AI" still holds.** The AI-training module is about *finding AI-training gigs* — the tool itself makes no LLM/API calls and needs no AI keys. Matching and filtering are deterministic.
 
 ---
@@ -93,7 +99,6 @@ job-hunter/
 |-- local_sync.py            # CSV backend
 |-- sheets_sync.py           # Google Sheets backend
 |-- resume_picker.py         # Maps role -> resume PDF
-|-- generate_resumes.py      # PDF resume generator
 |-- admin/
 |   |-- server.py            # Flask admin panel (port 5175)
 |   +-- static/index.html    # Single-page dashboard
@@ -281,7 +286,7 @@ python run_apply.py --profile jane --dry-run
 See **[DEPLOY.md](DEPLOY.md)** for full deployment instructions:
 
 - **Linux VPS** (DigitalOcean, Linode, AWS) — systemd + Nginx + HTTPS + basic auth
-- **Docker** — Dockerfile + docker-compose.yml included
+- **Docker** — `Dockerfile` and `docker-compose.yml` contents are given in DEPLOY.md (not shipped as files)
 - **PythonAnywhere** — free tier, admin panel only (no auto-apply)
 
 Deployed mode enables multi-user features: expandable per-user sections, profile creation, resume upload/delete.

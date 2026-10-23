@@ -11,7 +11,7 @@ Job-Hunter is not a high-throughput service, but it is exposed to provider drift
 | Concurrent edit/scrape | PATCH job while scrape saves results | No lost update or malformed CSV |
 | Process interruption | Kill during file write | Original or complete new file remains; never partial CSV |
 | Browser navigation failure | Timeout, CAPTCHA, login expiry, changed form | Stops safely; no submit; actionable status |
-| Dry run | All supported apply paths | Submit action count remains zero |
+| Dry run | All supported apply paths | Submit action count remains zero. *2026-10-23: proven on the Easy Apply and form paths with a fake page (`run_tests.py --safety`); not yet on the manual path or a real browser* |
 | Confirmation replay | Confirm one application, then encounter another | Second submission requires a new confirmation |
 | Resume upload | Oversize, wrong MIME/magic, traversal names | Rejected without file escape or partial residue |
 | Multi-user hosted test | Cross-profile route and filename attempts | Every cross-tenant access is denied |

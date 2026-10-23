@@ -50,3 +50,17 @@ External Nginx/basic authentication is not sufficient as the application securit
 ## Scope limitations
 
 Live third-party API behavior is inherently unstable and two live cases were skipped. No real application was submitted. The audit did not test a public deployment or perform a complete Git-history secret scan.
+
+## Addendum — 2026-10-23 consistency pass
+
+This addendum doesn't change the 2026-07-12 executed evidence above; that stays as recorded. It records drift found since, verified at `main@77ccbf1`:
+
+| Item | 2026-07-12 | 2026-10-23 | Note |
+|---|---|---|---|
+| Tracked Python files | 25 parsed | 22 tracked | The history rewrite removed `generate_resumes.py`; see JH-015 |
+| Default test inventory | 27 | 30 | +3 offline submission-safety tests |
+| Flask routes | 33 | 33 | Server, route ledger, GAP JH-013 and the matrix agree. `MAINTENANCE.md` and `APP_PLAYBOOK.md` list 20 and now point to the ledger |
+| Clean-clone test run | not recorded | **Aborted** at the web tests (profile `Example` missing → `sys.exit`) | Runner fixed to record the failure; root cause is JH-002/JH-016 |
+| Personal-data residue | "Pass for tracked tree" | **Residue found** in `docs/ADMIN_PANEL.md` mockups (surname, an email fragment) and one `admin/server.py` filename string | Replaced with synthetic placeholders. Git history and the `LICENSE`/README copyright holder still need an owner decision |
+| Submission safety | Not proven | Dry-run invariant proven on two paths (fake page) | GAP-JH-05/06 still open |
+| CI | Fail | Fail | Unchanged (JH-001) |
