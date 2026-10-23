@@ -2,8 +2,13 @@
 """
 Job Hunter — Automated Test Runner
 
-Runs smoke tests against live APIs and Playwright browser actions.
-No profile required — uses minimal test fixtures.
+Runs smoke tests against live APIs and Playwright browser actions, plus
+offline matcher, storage and submission-safety tests.
+
+Known isolation gap (JH-002 in docs/GAP_AUDIT.md): the web-search tests
+import scraper_web -> scraper -> config, which loads the active profile.
+On a clean clone with no matching profile they are reported as failures.
+The --safety tests stub config and never load a profile.
 
 Usage:
     python run_tests.py                  # Run all tests
@@ -12,7 +17,7 @@ Usage:
     python run_tests.py --matcher        # Matcher logic tests only
     python run_tests.py --storage        # CSV storage tests only
     python run_tests.py --safety         # Submission-safety tests only (offline, fake page)
-    python run_tests.py --all            # Everything including slow tests
+    python run_tests.py --all            # Same as no flags: every group
     python run_tests.py -v               # Verbose output
 """
 import sys
@@ -25,10 +30,6 @@ import traceback
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, asdict
-
-# ── Prevent config.py from loading a real profile ────────
-# We set a fake profile env var and patch sys.argv before any imports
-# that touch config.py. Individual tests import scrapers directly.
 
 # ── Test Infrastructure ──────────────────────────────────
 
@@ -71,6 +72,13 @@ class TestRunner:
             self._print_result("❌", name, dt, f"{type(e).__name__}: {e}")
             if self.verbose:
                 traceback.print_exc()
+        except SystemExit as e:
+            # config.py calls sys.exit(1) when the active profile is missing;
+            # record it as a failure instead of aborting the whole run.
+            dt = time.time() - t0
+            msg = f"SystemExit({e.code}) — likely no active profile (JH-002)"
+            self.results.append(TestResult(name, False, dt, msg))
+            self._print_result("❌", name, dt, msg)
 
     def _print_result(self, icon, name, dt, msg=""):
         line = f"  {icon} {name} ({dt:.2f}s)"

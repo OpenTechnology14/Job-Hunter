@@ -2,20 +2,19 @@
 
 ## `TESTING.md`
 
-- Replace the stated 24-test count. The audited default inventory was 27 (API 7, matcher 4, storage 4, web 2, browser 7, config 3); preferably generate counts from collection instead of hardcoding them.
-- Separate deterministic offline tests from live provider smoke tests and list required environment keys for the latter.
-- Correct “no profile required”: current imports can load and print the active profile. After isolation work, document the synthetic fixture.
-- Add dry-run non-submission, per-submit confirmation, temporary filesystem, CSV concurrency, and admin-route contract scenarios.
+*Done 2026-10-23: hardcoded count removed, deterministic/live split documented, "no profile required" corrected, dry-run and confirmation scenarios added (§14).* Still open:
+
+- List the required environment keys for the live smoke tests.
+- Add temporary-filesystem, CSV-concurrency and admin-route contract scenarios once those tests exist.
 
 ## `CONTRIBUTING.md`
 
-Replace “No automated test suite yet” with the actual `run_tests.py` commands, explain deterministic versus live suites, and require tests for behavioral changes.
+*Done 2026-10-23.*
 
 ## `README.md`
 
-- Add a release-profile statement: supported as a local, single-user, supervised tool; hosted/multi-user mode is experimental until the hosted gates close.
-- State that profile `.py` files execute trusted local code.
-- Link to the audit, open-source checklist, and supervision policy.
+- *Done 2026-10-23:* release-profile statement, trusted-code note, audit link.
+- Link to the open-source checklist and supervision policy.
 - Avoid implying universal source stability; third-party providers can change or throttle access.
 
 ## `SECURITY.md`

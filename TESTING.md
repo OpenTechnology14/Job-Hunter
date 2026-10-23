@@ -7,23 +7,28 @@ Manual test scenarios by feature area. Run through these before tagging a releas
 ## Automated Test Runner
 
 ```bash
-python run_tests.py                  # Run all tests (~6 seconds)
-python run_tests.py --api            # API scraper smoke tests only
+python run_tests.py                  # Every group (includes live HTTP)
+python run_tests.py --api            # API scraper + web-search smoke tests (live HTTP)
 python run_tests.py --browser        # Playwright browser action tests only
 python run_tests.py --matcher        # Matcher logic tests only
 python run_tests.py --storage        # CSV storage tests only
-python run_tests.py --all            # Everything including slow tests
+python run_tests.py --safety         # Submission-safety tests (offline, fake page)
+python run_tests.py --all            # Same as no flags
 python run_tests.py -v               # Verbose (show tracebacks)
 ```
 
-**24 tests across 5 categories:**
-- **API scrapers (7):** Live HTTP calls to Himalayas, RemoteOK, Greenhouse, Lever, Arbeitnow, USAJobs + format stability check
-- **Matcher (4):** Salary parsing, range overlap, keyword matching, exclude keywords
-- **Storage (3):** CSV write/read, deduplication, column order
-- **Browser (7):** Playwright install, navigation, form detection, form fill, file upload, apply type detection, field pattern matching
-- **Config (3):** Admin server exists, form config template, example profile
+Groups (the runner prints the live count; it isn't hardcoded here, because it drifted before):
+- **API scrapers** (live HTTP): Himalayas, RemoteOK, Greenhouse, Lever, Arbeitnow, USAJobs, format stability
+- **Web search** (runs with `--api`): URL detection, DuckDuckGo search
+- **Matcher:** salary parsing, range overlap, keyword matching, exclude keywords
+- **Storage:** CSV write/read, deduplication, column order, stale cleanup
+- **Browser** (Playwright): install, navigation, form detection, form fill, file upload, apply type detection, field pattern matching
+- **Submission safety** (offline): dry-run never clicks Submit, live Submit needs confirmation (§14)
+- **Config** (always runs): admin server exists, form config template, example profile
 
-No profile required — uses standalone test fixtures. Skips tests gracefully when API keys are missing or sources are down.
+**Deterministic vs live.** `--matcher --storage --safety` (plus Config) are offline and deterministic. `--api` and `--browser` depend on live providers and Playwright, so treat them as smoke tests. Live tests skip when API keys are missing.
+
+**Profile isolation is incomplete (JH-002).** The web-search tests import modules that load the active profile through `config.py`. On a clean clone with no matching profile, they're reported as failures. (Before 2026-10-23 that `sys.exit` aborted the whole run.) If a profile does exist, they load it, and `config.py` creates `output/<profile>/`. The safety tests stub `config` and never load a profile. The matcher tests still re-implement matcher logic inline (JH-014).
 
 ---
 

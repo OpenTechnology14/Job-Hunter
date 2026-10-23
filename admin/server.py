@@ -589,7 +589,7 @@ def generate_ai_resume(profile):
     )
     if result.returncode != 0:
         return jsonify({"error": result.stderr[-500:] or "Generation failed"}), 500
-    return jsonify({"ok": True, "filename": "example_Moody_AITraining_Resume.pdf"})
+    return jsonify({"ok": True, "filename": "example_AITraining_Resume.pdf"})
 
 
 # ── Run History endpoints ───────────────────────────────

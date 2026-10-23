@@ -23,7 +23,7 @@ job-hunter/
 |-- matcher.py               Keyword + salary matching (no AI)
 |-- resume_picker.py         Maps role category -> resume PDF
 |-- browser_apply.py         Playwright browser automation for form fill
-|-- generate_resumes.py      PDF resume generator (fpdf2)
+|-- (generate_resumes.py)    Not in the public repo; drop your own PDFs in output/{profile}/resumes/
 |
 |-- admin/
 |   |-- server.py            Flask API server (port 5175, localhost)
@@ -120,7 +120,7 @@ Job marked "Done" in spreadsheet
 | File | Purpose |
 |------|---------|
 | `admin/server.py` | Flask API. Reads/writes project files directly. Spawns scrape subprocesses. Two modes: local (single user) and deployed (multi-user with expandable sections). |
-| `admin/static/index.html` | Single-page app. 7 pages: Dashboard, Jobs, Config, Form Fill, Resumes, History, Setup. Dark theme, no build step. |
+| `admin/static/index.html` | Single-page app. 8 pages: Dashboard, Jobs, AI Training, Config, Form Fill, Resumes, History, Setup. Dark theme, no build step. |
 
 ---
 
@@ -184,7 +184,9 @@ The `pattern` is matched case-insensitively against form field labels during aut
 
 ## Running Tests
 
-No automated test suite yet. Manual testing:
+Automated: `python run_tests.py` (see [`TESTING.md`](TESTING.md) for the groups). The offline, deterministic groups are `python run_tests.py --matcher --storage --safety`. `--api` and `--browser` are live smoke tests. Behavioral changes need a test that calls the production function. Use a synthetic profile and a temp directory, never your real profile (see `AGENTS.md`).
+
+Manual checks:
 
 ```bash
 # Verify profile loads

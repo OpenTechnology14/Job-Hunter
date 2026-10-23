@@ -205,7 +205,7 @@ Edit all profile settings without touching Python files.
 ┌──────────────────────────────────────────┐
 │  Profile: Example                           │
 ├──────────────────────────────────────────┤
-│  Name:    [Example Moody         ]     │
+│  Name:    [Example Person        ]     │
 │  Email:   [contact@example.com ]     │
 │  Phone:   [(555) 010-0000         ]      │
 │  City:    [Example City    ] State: [ST]       │
@@ -225,7 +225,7 @@ Edit all profile settings without touching Python files.
 │  ┌──────────────────────────────────────────────┐  │
 │  │ Cybersecurity / IT Security                  │  │
 │  │ Salary: $85,000 - $150,000                   │  │
-│  │ Resume: example_Moody_Cybersecurity_Resume.pdf  │  │
+│  │ Resume: example_Cybersecurity_Resume.pdf        │  │
 │  │ Queries: Cybersecurity Analyst, IT Security  │  │
 │  │          Analyst, Security Engineer, ...     │  │
 │  │ [Edit] [Delete]                              │  │
@@ -315,8 +315,8 @@ hardcoded `FIELD_PATTERNS` and `AUTOFILL_DATA` in `browser_apply.py`.
 │  │ Form Label      │ Value                │ Enabled    │  │
 │  ├─────────────────┼──────────────────────┼────────────┤  │
 │  │ First Name      │ Example            │ ✅         │  │
-│  │ Last Name       │ Moody                │ ✅         │  │
-│  │ Email           │ examplemoody1421@...    │ ✅         │  │
+│  │ Last Name       │ Person               │ ✅         │  │
+│  │ Email           │ you@example.com         │ ✅         │  │
 │  │ Phone           │ (555) 010-0000       │ ✅         │  │
 │  │ LinkedIn        │                      │ ⬜         │  │
 │  │ Website         │ opentechnologyblog.. │ ✅         │  │
@@ -380,18 +380,18 @@ Upload, preview, and assign resume PDFs to role types.
 ├───────────────────────────────────────────────────────────┤
 │                                                           │
 │  ┌─────────────────────────────────────────────────────┐  │
-│  │ 📄 example_Moody_Cybersecurity_Resume.pdf    50KB     │  │
+│  │ 📄 example_Cybersecurity_Resume.pdf          50KB     │  │
 │  │    Assigned to: Cybersecurity / IT Security         │  │
 │  │    [Preview] [Replace] [Download]                   │  │
 │  └─────────────────────────────────────────────────────┘  │
 │  ┌─────────────────────────────────────────────────────┐  │
-│  │ 📄 example_Moody_AIEngineer_Resume.pdf       50KB     │  │
+│  │ 📄 example_AIEngineer_Resume.pdf             50KB     │  │
 │  │    Assigned to: AI / Automation Engineer            │  │
 │  │    Also: Fallback resume                            │  │
 │  │    [Preview] [Replace] [Download]                   │  │
 │  └─────────────────────────────────────────────────────┘  │
 │  ┌─────────────────────────────────────────────────────┐  │
-│  │ 📄 example_Moody_HealthIT_Resume.pdf         50KB     │  │
+│  │ 📄 example_HealthIT_Resume.pdf               50KB     │  │
 │  │    Assigned to: Health IT / Clinical Systems        │  │
 │  │    [Preview] [Replace] [Download]                   │  │
 │  └─────────────────────────────────────────────────────┘  │
