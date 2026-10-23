@@ -52,3 +52,8 @@ Split the same way the workflow is split above. Nothing here is written yet; fil
 - When you build a piece of the connection, move its scenario from "stub" to a real pass/fail with a date and what you actually did.
 - When the standalone workflow changes (new source, new admin panel feature), update §1 first — this doc should always describe what's actually running, not what's planned.
 - Cross-link new findings back into `PROPOSAL_OPENTECH_INTEGRATION_READINESS.md` if they change the architecture, not just this doc.
+
+## 5. Next concrete step (scoped 2026-10-23)
+
+- **Partial evidence for "Dry-run apply … without submitting":** fake-page tests in `run_tests.py --safety` (2026-10-23; see the progress log in [`PROPOSAL_RELEASE_AND_SAFETY_GAP_CLOSURE.md`](PROPOSAL_RELEASE_AND_SAFETY_GAP_CLOSURE.md)) prove the dry-run branch never clicks Submit. That is **not** the scenario as written: no real browser opened and no real form was filled. So the box stays unchecked.
+- **Next step:** run scenario 1 end to end (setup → scrape → match → admin review) with a **synthetic** profile copied from `profiles/example_profile.py`. Record the date, commit, sources that returned 0 and why, and anything that touched the operator's real profile. That last point is the current isolation gap (`JH-002`). It needs no owner decision. It does need network access, and its results are live-provider smoke evidence, not deterministic evidence.

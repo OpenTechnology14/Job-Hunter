@@ -339,3 +339,17 @@ Rollback disables OpenTech, restores the prior local adapter behind a short-live
 - Audited CSV/JSON mutations are atomic and concurrency-safe.
 - All 33 Flask routes map to a contract decision/test or are removed.
 - README, testing, contributing, security, deployment, setup, health, playbook, route ledger, gap audit, and release checklist match the implementation.
+
+## Progress log
+
+### 2026-10-23 — JH-WP2 step 1: characterization tests for the dry-run invariant
+
+**Verified:** `python run_tests.py --safety` adds three offline tests. They import `browser_apply` with stub `config`/`storage`/`resume_picker` modules and a temp `PROFILE_DIR`, so they use no profile, no network and no browser, and write nothing to `output/`. They drive `handle_easy_apply` and `handle_form_apply` against a fake page that records every click:
+
+- **GAP-JH-04 / OTJ-07 (current code):** in Easy Apply dry-run, the flow advances through Continue and Review to a visible **Submit**, does not click it, and returns `False`. In form-apply dry-run, nothing is clicked and the result is `False`.
+- **Live confirmation:** answering `s` at the SUBMIT prompt clicks nothing. Confirming clicks Submit exactly once.
+- **Mutation check:** deleting the dry-run branch in `handle_easy_apply` makes the first test fail. The test is load-bearing.
+
+**Not yet covered (still Proposed):** `SubmissionGuard` tokens (GAP-JH-05: no single-use, per-job/page confirmation exists, only a per-prompt `input()`); typed outcomes (GAP-JH-06: live `handle_form_apply` still returns `True` on "Enter when done" without observing a submit); and the `apply_to_job` "manual" path. These tests characterize today's behavior. When the guard lands, they become regression tests against it.
+
+**Next concrete step:** add `SubmissionGuard` (§7.2) behind the existing prompts. That means one token per job ID plus page fingerprint, consumed once, impossible to mint in dry-run. Then extend these fake-page tests to GAP-JH-05. It needs no owner decision and stays outside the hosted track.

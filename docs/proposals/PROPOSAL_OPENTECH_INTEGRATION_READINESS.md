@@ -163,3 +163,7 @@ Start with synthetic endpoint tests, then a private OpenTech project. Roll back 
 ## 13. Existing-document updates
 
 Update the README, setup checklist, testing guide, security policy, health check, app playbook, source list, OpenTech template README, and API documentation as each phase ships. Do not document the integration as available before the adapter and template import tests pass.
+
+## 14. Next concrete step (scoped 2026-10-23, not started)
+
+Delivery step 1 ("release truth") is owned by [`PROPOSAL_RELEASE_AND_SAFETY_GAP_CLOSURE.md`](PROPOSAL_RELEASE_AND_SAFETY_GAP_CLOSURE.md): JH-WP5 runs only after WP1–WP4. The first OpenTech-specific step that doesn't wait on code is a **sanitizer contract fixture**. This is a deterministic table of every candidate job/status field, each marked allow or deny, with a forbidden-field test (OTJ-03) written against it before `integrations/opentech/sanitize.py` exists. It's blocked by sequencing, not by a decision, except for one open privacy-owner item in §12: whether coarse location and match band are allowed by default. The fixture should mark those two as **Blocked** rather than guess.

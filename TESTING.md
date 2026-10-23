@@ -202,3 +202,15 @@ No profile required — uses standalone test fixtures. Skips tests gracefully wh
 | 13.4 | X-Ray fetch | `python boolean_query.py --profile <p> --fetch` | Real Greenhouse/Lever/Ashby postings when DuckDuckGo cooperates; graceful `0 postings … (throttling)` note otherwise |
 | 13.5 | Admin display | Config page → a role card → "🧭 Boolean / X-Ray search strings" | Expands to the Boolean string (Copy button) + LinkedIn/Indeed/X-Ray links |
 | 13.6 | Skip flag | `run_scrape.py --profile <p> --no-xray` | Step 1e skipped even when `boolean_search: True` |
+
+---
+
+## 14. Submission Safety (automated, offline)
+
+`python run_tests.py --safety` (also part of the default run). No profile, no network, no browser: `browser_apply` is imported with stub modules and a temp directory, and driven against a fake page that records clicks.
+
+| # | Scenario | Steps | Expected |
+|---|----------|-------|----------|
+| 14.1 | Dry-run Easy Apply reaches Submit | Fake flow: Continue → Review → Submit, `dry_run=True` | Submit never clicked; returns `False` (GAP-JH-04) |
+| 14.2 | Dry-run form apply | Fake page with a visible Submit, `dry_run=True` | No clicks at all; returns `False` |
+| 14.3 | Live submit confirmation | `s` at SUBMIT prompt, then Enter on a fresh flow | Skip → no click; confirm → exactly one Submit click |

@@ -11,6 +11,7 @@ Usage:
     python run_tests.py --browser        # Playwright tests only
     python run_tests.py --matcher        # Matcher logic tests only
     python run_tests.py --storage        # CSV storage tests only
+    python run_tests.py --safety         # Submission-safety tests only (offline, fake page)
     python run_tests.py --all            # Everything including slow tests
     python run_tests.py -v               # Verbose output
 """
@@ -864,6 +865,159 @@ def test_example_profile():
 
 
 # ═══════════════════════════════════════════════════════════
+# Submission Safety Tests (offline — fake page, no browser, no profile)
+# GAP-JH-04 / OTJ-07 in docs/proposals/PROPOSAL_RELEASE_AND_SAFETY_GAP_CLOSURE.md
+# ═══════════════════════════════════════════════════════════
+
+class _FakeButton:
+    def __init__(self, page, label):
+        self.page = page
+        self.label = label
+
+    def click(self):
+        self.page.clicks.append(self.label)
+        self.page.on_click(self.label)
+
+    def get_attribute(self, name):
+        return self.label if name == "aria-label" else None
+
+    def inner_text(self):
+        return self.label
+
+
+class _FakeApplyPage:
+    """Easy Apply flow: entry button, then a sequence of step buttons.
+
+    Each click on a step button advances to the next; the last step is
+    the Submit button. Records every click so tests can assert on them.
+    """
+
+    def __init__(self, steps):
+        self.clicks = []
+        self.steps = list(steps)
+        self.entry = _FakeButton(self, "Easy Apply")
+        self.step_index = None  # None until the entry button is clicked
+
+    def on_click(self, label):
+        if label == "Easy Apply":
+            self.step_index = 0
+        elif self.step_index is not None:
+            self.step_index += 1
+
+    def query_selector(self, selector):
+        if "jobs-apply-button" in selector:
+            return self.entry
+        if self.step_index is not None and self.step_index < len(self.steps):
+            return _FakeButton(self, self.steps[self.step_index])
+        return None
+
+    def query_selector_all(self, selector):
+        return []
+
+
+def _import_browser_apply_isolated():
+    """Import browser_apply with stub config/storage/resume modules.
+
+    browser_apply reads config at import time (which would load the active
+    profile and write into output/). Stubbing keeps this test synthetic:
+    no profile, no personal data, temp directory only.
+    """
+    try:
+        import playwright.sync_api  # noqa: F401 — browser_apply imports Page from it
+    except ImportError:
+        raise SkipTest("playwright not installed")
+    import types
+    import importlib
+
+    tmp = Path(tempfile.mkdtemp(prefix="jh-safety-"))
+    stubs = {
+        "config": types.SimpleNamespace(
+            USER_PROFILE={"name": "Test Person", "email": "test@example.com"},
+            ROLE_PROFILES={},
+            PROFILE_DIR=tmp,
+        ),
+        "resume_picker": types.SimpleNamespace(get_resume_by_filename=lambda f: ""),
+        "storage": types.SimpleNamespace(
+            get_worksheet=lambda: None,
+            pull_ready_jobs=lambda ws: [],
+            mark_applied=lambda *a, **k: None,
+        ),
+    }
+    saved = {name: sys.modules.get(name) for name in [*stubs, "browser_apply"]}
+    try:
+        for name, mod in stubs.items():
+            sys.modules[name] = mod
+        sys.modules.pop("browser_apply", None)
+        import io, contextlib
+        with contextlib.redirect_stdout(io.StringIO()):
+            ba = importlib.import_module("browser_apply")
+    finally:
+        for name, mod in saved.items():
+            if mod is None:
+                sys.modules.pop(name, None)
+            else:
+                sys.modules[name] = mod
+    ba.time.sleep = lambda s: None
+    return ba
+
+
+def _run_quietly(fn, answers, *args, **kwargs):
+    """Call fn with input() answering from `answers`; returns (result, prompts)."""
+    import builtins, io, contextlib
+    prompts = []
+    queue = list(answers)
+
+    def fake_input(prompt=""):
+        prompts.append(prompt)
+        return queue.pop(0) if queue else ""
+
+    original = builtins.input
+    builtins.input = fake_input
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = fn(*args, **kwargs)
+    finally:
+        builtins.input = original
+    return result, prompts
+
+
+def test_dry_run_easy_apply_never_clicks_submit():
+    """GAP-JH-04: dry-run reaches a visible Submit button and does not click it."""
+    ba = _import_browser_apply_isolated()
+    page = _FakeApplyPage(["Continue to next step", "Review your application", "Submit application"])
+    result, _ = _run_quietly(ba.handle_easy_apply, [""], page, "", dry_run=True)
+    assert result is False, "dry-run must not report a submission"
+    assert page.step_index == 2, f"flow should reach the Submit step, stopped at {page.step_index}"
+    assert "Submit application" not in page.clicks, f"dry-run clicked Submit: {page.clicks}"
+
+
+def test_dry_run_form_apply_clicks_nothing():
+    """GAP-JH-04: generic form path in dry-run clicks nothing and reports no submission."""
+    ba = _import_browser_apply_isolated()
+    page = _FakeApplyPage(["Submit application"])
+    page.step_index = 0  # Submit visible immediately
+    result, _ = _run_quietly(ba.handle_form_apply, [""], page, "", dry_run=True)
+    assert result is False, "dry-run must not report a submission"
+    assert page.clicks == [], f"dry-run clicked: {page.clicks}"
+
+
+def test_live_submit_requires_explicit_confirmation():
+    """Live mode: skipping at the SUBMIT prompt clicks nothing; confirming clicks Submit exactly once."""
+    ba = _import_browser_apply_isolated()
+
+    skipped = _FakeApplyPage(["Submit application"])
+    result, prompts = _run_quietly(ba.handle_easy_apply, ["", "s"], skipped, "", dry_run=False)
+    assert result is False and "Submit application" not in skipped.clicks, \
+        f"skip at SUBMIT prompt still submitted: {skipped.clicks}"
+    assert any("SUBMIT" in p for p in prompts), "no SUBMIT confirmation prompt was shown"
+
+    confirmed = _FakeApplyPage(["Submit application"])
+    result, _ = _run_quietly(ba.handle_easy_apply, ["", ""], confirmed, "", dry_run=False)
+    assert result is True, "confirmed submit should report success"
+    assert confirmed.clicks.count("Submit application") == 1, f"clicks: {confirmed.clicks}"
+
+
+# ═══════════════════════════════════════════════════════════
 # Main
 # ═══════════════════════════════════════════════════════════
 
@@ -877,6 +1031,7 @@ def main():
     run_matcher = "--matcher" in args or "--all" in args or not args
     run_storage = "--storage" in args or "--all" in args or not args
     run_browser = "--browser" in args or "--all" in args or not args
+    run_safety = "--safety" in args or "--all" in args or not args
 
     runner = TestRunner(verbose=verbose)
 
@@ -923,6 +1078,12 @@ def main():
         runner.run("File upload", test_playwright_file_upload)
         runner.run("Apply type detection", test_playwright_apply_type_detection)
         runner.run("Field pattern matching", test_playwright_field_pattern_matching)
+
+    if run_safety:
+        print(f"\n── Submission Safety Tests (offline) ──")
+        runner.run("Dry-run Easy Apply never clicks Submit", test_dry_run_easy_apply_never_clicks_submit)
+        runner.run("Dry-run form apply clicks nothing", test_dry_run_form_apply_clicks_nothing)
+        runner.run("Live submit needs explicit confirmation", test_live_submit_requires_explicit_confirmation)
 
     print(f"\n── Config Tests ──")
     runner.run("Admin server exists", test_admin_imports)
