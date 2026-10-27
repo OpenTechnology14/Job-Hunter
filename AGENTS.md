@@ -1,5 +1,9 @@
 # AGENTS.md — Job-Hunter
 
+## Agent workflow startup
+
+At task/session start, read [the coordination guide](docs/AGENT_STEERING_AND_STANDUPS.md) and [accepted workflow reference](.agent-workflows.json). Check source/CI drift before using the library. Existing project privacy, application supervision and release rules remain authoritative. The facilitator helps refine ideas from a sentence or short list, finishes with a short conclusion, then fills canonical intake and generates the next prompt.
+
 Read this file before modifying the repository.
 
 ## Project identity

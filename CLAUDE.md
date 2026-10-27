@@ -1,5 +1,9 @@
 # CLAUDE.md — Job Hunter Automation System
 
+## Agent workflow startup
+
+At task/session start, read [the coordination guide](docs/AGENT_STEERING_AND_STANDUPS.md) and [accepted workflow reference](.agent-workflows.json). Check source/CI drift before using the library. Existing project privacy, application supervision and release rules remain authoritative. The facilitator helps refine ideas from a sentence or short list, finishes with a short conclusion, then fills canonical intake and generates the next prompt.
+
 ## Project Overview
 
 A two-phase local job hunting automation system. No cloud hosting, no AI API
