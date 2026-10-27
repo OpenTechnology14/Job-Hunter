@@ -1,0 +1,35 @@
+name: CI
+
+# Offline, deterministic test suite (JH-001). No network-dependent tests, no
+# secrets, no personal profile: run_tests.py uses profiles/example_profile.py
+# and a temp working directory. Live provider/browser smoke tests stay manual
+# (`python run_tests.py --api` / `--browser`).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Syntax check
+        run: python -m compileall -q -x '(^|/)(venv|\.venv)/' .
+      - name: Offline test suite
+        run: python run_tests.py

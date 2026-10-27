@@ -1,0 +1,20 @@
+{
+  "custom_fields": [
+    {"pattern": "salary.?expect", "value": "Negotiable"},
+    {"pattern": "earliest.?start", "value": "Immediately"},
+    {"pattern": "relocat", "value": "No"},
+    {"pattern": "sponsor", "value": "N/A - US Citizen"},
+    {"pattern": "how.?(did you)?.?hear", "value": "Online job search"},
+    {"pattern": "why.?(do you)?.?want", "value": ""},
+    {"pattern": "cover.?letter", "value": ""}
+  ],
+  "select_defaults": [
+    {"pattern": "gender", "value": "Prefer not to say"},
+    {"pattern": "race|ethnicity", "value": "Prefer not to say"},
+    {"pattern": "veteran", "value": "No"},
+    {"pattern": "disability", "value": "Prefer not to say"},
+    {"pattern": "education.?level", "value": "Bachelor's Degree"},
+    {"pattern": "work.?auth", "value": "Yes"},
+    {"pattern": "clearance", "value": "No"}
+  ]
+}

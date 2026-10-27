@@ -1,0 +1,14 @@
+# Core (always needed)
+requests>=2.31.0
+playwright>=1.40.0
+python-dotenv>=1.0.0
+fpdf2>=2.7.0
+
+# Admin Panel
+flask>=3.0.0
+
+# Google Sheets (only needed if STORAGE_MODE = "google")
+# Uncomment these if using Google Sheets:
+# gspread>=6.0.0
+# google-auth>=2.25.0
+# gspread-formatting>=1.1.2
