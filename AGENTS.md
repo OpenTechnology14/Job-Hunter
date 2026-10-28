@@ -1,5 +1,13 @@
 # AGENTS.md — Job-Hunter
 
+## Agent coordination and scoped validation
+
+At the start of every task/session, including a fresh T3 thread, read [docs/AGENT_STEERING_AND_STANDUPS.md](docs/AGENT_STEERING_AND_STANDUPS.md) before planning, assigning agents or editing. Resolve this path from the repository root, even when starting in a subdirectory.
+
+Identify the existing coordinator and your role before creating threads. A worker follows its complete bounded brief and returns progress/questions to that coordinator; it does not create another coordinator or timer. On this workstation, discover the project/coordinator in `~/.t3/agent-module/installation.json` when present; elsewhere follow the guide's setup prompts and state what is unconfigured. Keep standups available on request, pair up to three simple steering questions, and carry unanswered decisions across hourly finalization.
+
+Keep existing tasks, decisions and PR evidence authoritative. Owner policy (2026-10-25): documentation/prompt-only changes need relevant local documentation checks, not an automatic full CI run; code/runtime changes retain applicable project verification. Honor an explicit owner force-merge instruction for the named PR and record outstanding checks honestly. This policy is the scoped exception to blanket CI/build wording elsewhere; it does not grant a blanket bypass for future work.
+
 Read this file before modifying the repository.
 
 ## Project identity
