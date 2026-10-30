@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "repository": "https://github.com/OpenTechnology14/AgentWorkflows",
-  "revision": "b3672e29d67450c84514e6240e2a853c4b091790",
+  "revision": "07f5d729538491417287bce5a9b98ff9c9f9dc3a",
   "upstream": "refs/heads/main",
   "guide": "docs/AGENT_STEERING_AND_STANDUPS.md",
   "files": {
     "docs/PROJECT_INTEGRATION.md": "89ec7f3720f1836f01e5acd1c8f649cdc5c5db04b561b879a8809df43311ae59",
-    "packaging/ENTRYPOINT.md": "77b6e4280d9eab8e719a1ab1dff2f591c67ba55116ebb203d8f58aa31cf47e8d",
-    "packaging/manifest.json": "12eefacf0040cab9137564d9e27fb8fafa846347dd5a30c7e64b27c5a7f3ce8d",
+    "packaging/ENTRYPOINT.md": "f2123130ebf02bb6f8ca0474d460a141e839f1e8c01b3c5cbab0322b57ce5ca8",
+    "packaging/manifest.json": "99f01f1c4924e7779e1ad8f9afb28d685fbdc669f72c3c88ca6bb752952b8160",
     "scripts/project_reference.py": "6635709a7fd87f25f44179b2497aef5649ed1bdcc2b3084592f782f6f6bccc75",
     "templates/AGENT_PROMPT.md": "848f5d2135ff5bd916d9ef9efbd95eb95fa126a6bfe1928b2bd17673a07b80bb",
     "templates/BUG.md": "621a342d2f0a704e9771289b98ad85fb9a2c75c50937a62f4f604d1301ad9107",
@@ -32,10 +32,11 @@
     "workflows/PROJECT_REFERENCE.md": "1ff625aa78d8a993420201c6e3a93b6ca52a8bfd3fcf988b43652a569f1a1d5e",
     "workflows/PROMPT_TRANSLATION.md": "397c6591474b9592386374eb246287ae59c5556dbdcd48d5fd0971c314f9723a",
     "workflows/PROPOSALS.md": "9cf903b0bc3c39efb40163c119693ca8939b7a35cbc7889cd3c6d61368875e52",
-    "workflows/README.md": "cc46e4173608e21991b425ceee9df059b0983a9d2bd32c0b1f8b478e38a86cf5",
+    "workflows/README.md": "3364fb7f52908074e56f699c9c0444a490bbf387816b3bdb6e285379498332ae",
     "workflows/REVIEW_RELEASE.md": "53701dd03cf785f90d2a621a0f20654a52f9bb98c53de6de88139a8a535ca61b",
     "workflows/SECURITY_DATA.md": "9249a6db5eb92c7de7f40c5a4e87268514bbe5858d209aef540ea1cdcb57ae38",
-    "workflows/STARTUP.md": "865c284e32cfede27694bd25546d8411973d739dff56b0ffd06bee8bd3fb9ebc",
-    "workflows/VERIFICATION.md": "5e110999cbbb9cbc20ddfbba5191596616f6ed57f7b91a66df763166725fb1ab"
+    "workflows/STARTUP.md": "2726335ab7a860f187f413a5b35d9e8b959cd079775460baa15389ce07fe4d8f",
+    "workflows/VERIFICATION.md": "5e110999cbbb9cbc20ddfbba5191596616f6ed57f7b91a66df763166725fb1ab",
+    "workflows/WORKING_TOGETHER.md": "3c11532a6990acdf837a1c7db364cbd05f015853e91108cba88a9df19b80ed74"
   }
 }
